@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { StatCard } from "@/components/stat-card";
 import { ContractCard } from "@/components/contract-card";
 import { ActivityFeed } from "@/components/activity-feed";
@@ -11,72 +12,56 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { getContracts } from "@/lib/api";
+import { useLocation } from "wouter";
 
 export default function Dashboard() {
-  const [selectedContract, setSelectedContract] = useState<string | null>(null);
+  const [, setLocation] = useLocation();
+  const { data: contracts = [], isLoading } = useQuery({
+    queryKey: ["/api/contracts"],
+    queryFn: getContracts,
+  });
+
+  const activeContracts = contracts.filter((c) => c.status === "active");
+  const expiringContracts = contracts.filter((c) => c.status === "expiring");
+  const highRiskContracts = contracts.filter((c) => c.riskLevel === "high");
+  const mediumRiskContracts = contracts.filter((c) => c.riskLevel === "medium");
+  const lowRiskContracts = contracts.filter((c) => c.riskLevel === "low");
+
+  const recentContracts = contracts.slice(0, 3);
 
   const stats = [
     {
       title: "Active Contracts",
-      value: "1,247",
+      value: activeContracts.length.toString(),
       icon: FileText,
-      trend: "+12% from last month",
+      trend: `${contracts.length} total contracts`,
       trendDirection: "up" as const,
       testId: "card-stat-active",
     },
     {
       title: "Expiring Soon",
-      value: "23",
+      value: expiringContracts.length.toString(),
       icon: Clock,
       trend: "Next 30 days",
       trendDirection: "down" as const,
       testId: "card-stat-expiring",
     },
     {
-      title: "AI Assists This Month",
-      value: "342",
+      title: "AI Analyzed",
+      value: contracts.filter((c) => c.aiInsights).length.toString(),
       icon: Sparkles,
-      trend: "+28% from last month",
+      trend: "Contracts with AI insights",
       trendDirection: "up" as const,
       testId: "card-stat-ai",
     },
     {
-      title: "Cost Savings",
-      value: "$1.2M",
+      title: "High Risk",
+      value: highRiskContracts.length.toString(),
       icon: TrendingUp,
-      trend: "+18% from last month",
-      trendDirection: "up" as const,
+      trend: "Requires attention",
+      trendDirection: "down" as const,
       testId: "card-stat-savings",
-    },
-  ];
-
-  const recentContracts = [
-    {
-      id: "1",
-      title: "Master Service Agreement",
-      counterparty: "Acme Corporation",
-      status: "active" as const,
-      value: "$250,000",
-      expiryDate: "Dec 31, 2025",
-      riskLevel: "low" as const,
-    },
-    {
-      id: "2",
-      title: "Software License Agreement",
-      counterparty: "TechCo Inc",
-      status: "expiring" as const,
-      value: "$150,000",
-      expiryDate: "Mar 15, 2025",
-      riskLevel: "medium" as const,
-    },
-    {
-      id: "3",
-      title: "Consulting Services Agreement",
-      counterparty: "Global Consulting LLC",
-      status: "active" as const,
-      value: "$500,000",
-      expiryDate: "Jun 30, 2026",
-      riskLevel: "high" as const,
     },
   ];
 
@@ -120,7 +105,7 @@ export default function Dashboard() {
             Welcome back! Here's your contract portfolio overview.
           </p>
         </div>
-        <Button data-testid="button-new-contract">
+        <Button onClick={() => setLocation("/contracts")} data-testid="button-new-contract">
           <Plus className="h-4 w-4 mr-2" />
           New Contract
         </Button>
@@ -136,18 +121,31 @@ export default function Dashboard() {
         <div className="lg:col-span-2 space-y-6">
           <div>
             <h2 className="text-xl font-semibold mb-4">Recent Contracts</h2>
-            <div className="grid gap-4 md:grid-cols-2">
-              {recentContracts.map((contract) => (
-                <ContractCard
-                  key={contract.id}
-                  {...contract}
-                  onClick={() => {
-                    console.log("Contract clicked:", contract.id);
-                    setSelectedContract(contract.id);
-                  }}
-                />
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="text-center py-8 text-muted-foreground">Loading contracts...</div>
+            ) : recentContracts.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No contracts yet. Upload your first contract to get started!</p>
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {recentContracts.map((contract) => (
+                  <ContractCard
+                    key={contract.id}
+                    id={contract.id}
+                    title={contract.title}
+                    counterparty={contract.counterparty}
+                    status={contract.status as any}
+                    value={contract.value || "$0"}
+                    expiryDate={contract.expiryDate || "N/A"}
+                    riskLevel={contract.riskLevel as any}
+                    onClick={() => {
+                      console.log("Contract clicked:", contract.id);
+                    }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
@@ -157,21 +155,21 @@ export default function Dashboard() {
                 level="high"
                 title="High Risk"
                 description="Require immediate attention"
-                count={12}
+                count={highRiskContracts.length}
                 testId="card-risk-high"
               />
               <RiskIndicator
                 level="medium"
                 title="Medium Risk"
                 description="Review recommended"
-                count={34}
+                count={mediumRiskContracts.length}
                 testId="card-risk-medium"
               />
               <RiskIndicator
                 level="low"
                 title="Low Risk"
                 description="Standard compliance"
-                count={1201}
+                count={lowRiskContracts.length}
                 testId="card-risk-low"
               />
             </div>

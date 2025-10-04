@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ContractTable } from "@/components/contract-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,63 +11,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, Upload, Filter } from "lucide-react";
+import { getContracts } from "@/lib/api";
+import { useLocation } from "wouter";
 
 export default function Contracts() {
+  const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-
-  const contracts = [
-    {
-      id: "1",
-      title: "Master Service Agreement",
-      counterparty: "Acme Corporation",
-      type: "MSA",
-      status: "active" as const,
-      value: "$250,000",
-      effectiveDate: "Jan 1, 2024",
-      expiryDate: "Dec 31, 2025",
-    },
-    {
-      id: "2",
-      title: "Software License Agreement",
-      counterparty: "TechCo Inc",
-      type: "SLA",
-      status: "expiring" as const,
-      value: "$150,000",
-      effectiveDate: "Mar 15, 2023",
-      expiryDate: "Mar 15, 2025",
-    },
-    {
-      id: "3",
-      title: "Consulting Services Agreement",
-      counterparty: "Global Consulting LLC",
-      type: "CSA",
-      status: "active" as const,
-      value: "$500,000",
-      effectiveDate: "Jun 1, 2024",
-      expiryDate: "Jun 30, 2026",
-    },
-    {
-      id: "4",
-      title: "Non-Disclosure Agreement",
-      counterparty: "Startup Ventures",
-      type: "NDA",
-      status: "active" as const,
-      value: "$0",
-      effectiveDate: "Feb 1, 2024",
-      expiryDate: "Feb 1, 2027",
-    },
-    {
-      id: "5",
-      title: "Purchase Agreement",
-      counterparty: "Supply Chain Co",
-      type: "PA",
-      status: "expired" as const,
-      value: "$75,000",
-      effectiveDate: "Jan 1, 2023",
-      expiryDate: "Dec 31, 2024",
-    },
-  ];
+  
+  const { data: contracts = [], isLoading } = useQuery({
+    queryKey: ["/api/contracts"],
+    queryFn: getContracts,
+  });
 
   const filteredContracts = contracts.filter((contract) => {
     const matchesSearch =
@@ -75,7 +31,10 @@ export default function Contracts() {
     const matchesStatus =
       statusFilter === "all" || contract.status === statusFilter;
     return matchesSearch && matchesStatus;
-  });
+  }).map((contract) => ({
+    ...contract,
+    type: contract.contractType || "N/A",
+  }));
 
   return (
     <div className="space-y-6">
@@ -86,7 +45,7 @@ export default function Contracts() {
             Centralized storage and management of all contracts
           </p>
         </div>
-        <Button data-testid="button-upload-contract">
+        <Button onClick={() => setLocation("/upload")} data-testid="button-upload-contract">
           <Upload className="h-4 w-4 mr-2" />
           Upload Contract
         </Button>
@@ -118,24 +77,42 @@ export default function Contracts() {
         </Select>
       </div>
 
-      <ContractTable
-        contracts={filteredContracts}
-        onRowClick={(contract) => console.log("Navigate to contract:", contract.id)}
-      />
-
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <p>
-          Showing {filteredContracts.length} of {contracts.length} contracts
-        </p>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" disabled data-testid="button-prev">
-            Previous
-          </Button>
-          <Button variant="outline" size="sm" disabled data-testid="button-next">
-            Next
+      {isLoading ? (
+        <div className="text-center py-8 text-muted-foreground">Loading contracts...</div>
+      ) : filteredContracts.length === 0 && contracts.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground mb-4">No contracts yet. Upload your first contract to get started!</p>
+          <Button onClick={() => setLocation("/upload")} data-testid="button-upload-first">
+            <Upload className="h-4 w-4 mr-2" />
+            Upload First Contract
           </Button>
         </div>
-      </div>
+      ) : filteredContracts.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
+          No contracts match your search criteria.
+        </div>
+      ) : (
+        <>
+          <ContractTable
+            contracts={filteredContracts}
+            onRowClick={(contract) => console.log("Navigate to contract:", contract.id)}
+          />
+
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <p>
+              Showing {filteredContracts.length} of {contracts.length} contracts
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" disabled data-testid="button-prev">
+                Previous
+              </Button>
+              <Button variant="outline" size="sm" disabled data-testid="button-next">
+                Next
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

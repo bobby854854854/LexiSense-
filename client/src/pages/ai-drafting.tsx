@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,10 +12,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles, Download, Send } from "lucide-react";
+import { Sparkles, Download, Send, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { draftContract } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AIDrafting() {
+  const { toast } = useToast();
   const [contractType, setContractType] = useState("");
   const [party1, setParty1] = useState("");
   const [party2, setParty2] = useState("");
@@ -22,11 +26,37 @@ export default function AIDrafting() {
   const [terms, setTerms] = useState("");
   const [generatedText, setGeneratedText] = useState("");
 
+  const draftMutation = useMutation({
+    mutationFn: draftContract,
+    onSuccess: (data) => {
+      setGeneratedText(data.contract);
+    },
+    onError: () => {
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate contract. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleGenerate = () => {
-    console.log("Generating contract...");
-    setGeneratedText(
-      `MASTER SERVICE AGREEMENT\n\nThis Master Service Agreement ("Agreement") is entered into as of [Date], by and between ${party1 || "[Party 1]"} ("Client") and ${party2 || "[Party 2]"} ("Service Provider").\n\n1. SERVICES\nService Provider agrees to provide the following services to Client:\n${terms || "[Service Description]"}\n\n2. COMPENSATION\nClient agrees to pay Service Provider ${value || "$[Amount]"} for the services rendered under this Agreement.\n\n3. TERM\nThis Agreement shall commence on the Effective Date and continue for a period of [Duration], unless earlier terminated as provided herein.\n\n4. CONFIDENTIALITY\nBoth parties agree to maintain confidentiality of all proprietary information shared during the term of this Agreement.\n\n5. TERMINATION\nEither party may terminate this Agreement upon [Notice Period] written notice to the other party.\n\n6. GOVERNING LAW\nThis Agreement shall be governed by and construed in accordance with the laws of [Jurisdiction].\n\nIN WITNESS WHEREOF, the parties have executed this Agreement as of the date first written above.\n\n_____________________\n${party1 || "[Party 1]"}\n\n_____________________\n${party2 || "[Party 2]"}`
-    );
+    if (!contractType || !party1 || !party2) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in contract type and both parties.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    draftMutation.mutate({
+      contractType,
+      party1,
+      party2,
+      value,
+      terms,
+    });
   };
 
   return (
@@ -114,10 +144,20 @@ export default function AIDrafting() {
             <Button
               className="w-full"
               onClick={handleGenerate}
+              disabled={draftMutation.isPending}
               data-testid="button-generate"
             >
-              <Sparkles className="h-4 w-4 mr-2" />
-              Generate Contract
+              {draftMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Generate Contract
+                </>
+              )}
             </Button>
           </CardContent>
         </Card>
