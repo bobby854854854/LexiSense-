@@ -1,13 +1,223 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { insertContractSchema, type AIInsight } from "@shared/schema";
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+async function analyzeContractWithAI(contractText: string, title: string, counterparty: string): Promise<{
+  insights: AIInsight[];
+  extractedData: {
+    value?: string;
+    effectiveDate?: string;
+    expiryDate?: string;
+    riskLevel: "low" | "medium" | "high";
+  };
+}> {
+  try {
+    const prompt = `You are an AI contract analyst. Analyze the following contract and extract key information.
+
+Contract Title: ${title}
+Counterparty: ${counterparty}
+
+Contract Text:
+${contractText.substring(0, 8000)}
+
+Please provide:
+1. Key terms and clauses
+2. Obligations for both parties
+3. Potential risks or non-standard clauses
+4. Opportunities for negotiation
+5. Estimated contract value (if mentioned)
+6. Effective date (if mentioned)
+7. Expiry/termination date (if mentioned)
+8. Overall risk assessment (low/medium/high)
+
+Format your response as JSON with this structure:
+{
+  "insights": [
+    {"type": "key-term", "title": "...", "content": "..."},
+    {"type": "obligation", "title": "...", "content": "..."},
+    {"type": "risk", "title": "...", "content": "...", "severity": "low|medium|high"},
+    {"type": "opportunity", "title": "...", "content": "..."}
+  ],
+  "value": "estimated contract value or null",
+  "effectiveDate": "date or null",
+  "expiryDate": "date or null",
+  "riskLevel": "low|medium|high"
+}`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert contract analyst. Respond only with valid JSON.",
+        },
+        { role: "user", content: prompt },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.3,
+    });
+
+    const result = JSON.parse(completion.choices[0].message.content || "{}");
+    
+    return {
+      insights: result.insights || [],
+      extractedData: {
+        value: result.value,
+        effectiveDate: result.effectiveDate,
+        expiryDate: result.expiryDate,
+        riskLevel: result.riskLevel || "low",
+      },
+    };
+  } catch (error) {
+    console.error("AI analysis error:", error);
+    return {
+      insights: [
+        {
+          type: "risk",
+          title: "AI Analysis Unavailable",
+          content: "Unable to perform AI analysis at this time.",
+          severity: "low",
+        },
+      ],
+      extractedData: {
+        riskLevel: "low",
+      },
+    };
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // put application routes here
-  // prefix all routes with /api
+  app.get("/api/contracts", async (req, res) => {
+    try {
+      const contracts = await storage.getAllContracts();
+      res.json(contracts);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch contracts" });
+    }
+  });
 
-  // use storage to perform CRUD operations on the storage interface
-  // e.g. storage.insertUser(user) or storage.getUserByUsername(username)
+  app.get("/api/contracts/:id", async (req, res) => {
+    try {
+      const contract = await storage.getContract(req.params.id);
+      if (!contract) {
+        return res.status(404).json({ error: "Contract not found" });
+      }
+      res.json(contract);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch contract" });
+    }
+  });
+
+  app.post("/api/contracts", async (req, res) => {
+    try {
+      const data = insertContractSchema.parse(req.body);
+      const contract = await storage.createContract(data);
+      res.json(contract);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid contract data" });
+    }
+  });
+
+  app.post("/api/contracts/analyze", async (req, res) => {
+    try {
+      const { text, title, counterparty, contractType } = req.body;
+      
+      if (!text || !title || !counterparty) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      const analysis = await analyzeContractWithAI(text, title, counterparty);
+      
+      const contract = await storage.createContract({
+        title,
+        counterparty,
+        contractType: contractType || "Other",
+        status: "active",
+        value: analysis.extractedData.value || "$0",
+        effectiveDate: analysis.extractedData.effectiveDate || new Date().toISOString().split('T')[0],
+        expiryDate: analysis.extractedData.expiryDate || null,
+        riskLevel: analysis.extractedData.riskLevel,
+        originalText: text,
+        aiInsights: analysis.insights as any,
+      });
+
+      res.json(contract);
+    } catch (error) {
+      console.error("Contract analysis error:", error);
+      res.status(500).json({ error: "Failed to analyze contract" });
+    }
+  });
+
+  app.patch("/api/contracts/:id", async (req, res) => {
+    try {
+      const contract = await storage.updateContract(req.params.id, req.body);
+      if (!contract) {
+        return res.status(404).json({ error: "Contract not found" });
+      }
+      res.json(contract);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update contract" });
+    }
+  });
+
+  app.delete("/api/contracts/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteContract(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Contract not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete contract" });
+    }
+  });
+
+  app.post("/api/contracts/draft", async (req, res) => {
+    try {
+      const { contractType, party1, party2, value, terms } = req.body;
+
+      const prompt = `Generate a professional ${contractType} contract between ${party1} and ${party2}.
+
+Key Requirements:
+- Contract value: ${value || "To be determined"}
+- Terms: ${terms || "Standard terms"}
+
+Create a complete, legally-sound contract with appropriate sections including:
+- Parties
+- Services/Scope
+- Compensation
+- Term and Termination
+- Confidentiality
+- Governing Law
+
+Make it professional and ready for review.`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert contract lawyer. Generate professional, legally-sound contracts.",
+          },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.5,
+        max_tokens: 2000,
+      });
+
+      const generatedContract = completion.choices[0].message.content;
+      res.json({ contract: generatedContract });
+    } catch (error) {
+      console.error("Contract drafting error:", error);
+      res.status(500).json({ error: "Failed to generate contract" });
+    }
+  });
 
   const httpServer = createServer(app);
 
