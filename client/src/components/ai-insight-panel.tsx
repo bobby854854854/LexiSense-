@@ -14,11 +14,15 @@ interface AIInsightPanelProps {
   testId?: string;
 }
 
-const typeColors = {
-  "key-term": "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
-  obligation: "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20",
-  risk: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20",
-  opportunity: "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
+const getTypeColor = (type: string) => {
+  const colors = {
+    "key-term": "blue",
+    obligation: "purple",
+    risk: "red",
+    opportunity: "green",
+  };
+  const color = colors[type as keyof typeof colors] || "gray";
+  return `bg-${color}-500/10 text-${color}-700 dark:text-${color}-400 border-${color}-500/20`;
 };
 
 export function AIInsightPanel({ insights, testId }: AIInsightPanelProps) {
@@ -39,7 +43,7 @@ export function AIInsightPanel({ insights, testId }: AIInsightPanelProps) {
           >
             <div className="flex items-start justify-between gap-2">
               <h4 className="font-medium text-sm">{insight.title}</h4>
-              <Badge className={typeColors[insight.type]}>
+              <Badge className={getTypeColor(insight.type)}>
                 {insight.type.replace("-", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
               </Badge>
             </div>

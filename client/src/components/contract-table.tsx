@@ -8,9 +8,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown } from "lucide-react";
 
-interface Contract {
+export interface Contract {
   id: string;
   title: string;
   counterparty: string;
@@ -47,7 +46,7 @@ export function ContractTable({ contracts, onRowClick }: ContractTableProps) {
                 data-testid="button-sort-title"
               >
                 Contract Title
-                <ArrowUpDown className="ml-2 h-3 w-3" />
+                <span className="ml-2">↕</span>
               </Button>
             </TableHead>
             <TableHead>Counterparty</TableHead>
@@ -72,10 +71,10 @@ export function ContractTable({ contracts, onRowClick }: ContractTableProps) {
                 {contract.type}
               </TableCell>
               <TableCell>
-                <Badge className={statusColors[contract.status]}>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusColors[contract.status] || "bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/20"}`}>
                   {contract.status.charAt(0).toUpperCase() +
                     contract.status.slice(1)}
-                </Badge>
+                </span>
               </TableCell>
               <TableCell>{contract.value}</TableCell>
               <TableCell className="text-muted-foreground">

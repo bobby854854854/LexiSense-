@@ -15,15 +15,23 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(() => {
-    const stored = localStorage.getItem("lexisense-theme");
-    return (stored === "dark" || stored === "light") ? stored : "dark";
+    try {
+      const stored = localStorage.getItem("lexisense-theme");
+      return (stored === "dark" || stored === "light") ? stored : "dark";
+    } catch {
+      return "dark";
+    }
   });
 
   useEffect(() => {
     const root = document.documentElement;
     root.classList.remove("light", "dark");
     root.classList.add(theme);
-    localStorage.setItem("lexisense-theme", theme);
+    try {
+      localStorage.setItem("lexisense-theme", theme);
+    } catch {
+      // Ignore localStorage errors
+    }
   }, [theme]);
 
   const toggleTheme = () => {

@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -6,11 +7,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BarChart3, TrendingUp, DollarSign, Clock } from "lucide-react";
-import { useState } from "react";
-
-export default function Analytics() {
-  const [timeRange, setTimeRange] = useState("12months");
+export default function Analytics(): React.ReactElement {
+  const timeRange = "12months";
 
   return (
     <div className="space-y-6">
@@ -21,7 +19,7 @@ export default function Analytics() {
             Insights and trends across your contract portfolio
           </p>
         </div>
-        <Select value={timeRange} onValueChange={setTimeRange}>
+        <Select value={timeRange} onValueChange={() => {}}>
           <SelectTrigger className="w-48" data-testid="select-timerange">
             <SelectValue placeholder="Select time range" />
           </SelectTrigger>
@@ -40,7 +38,7 @@ export default function Analytics() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Contract Value
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <span className="h-4 w-4 text-muted-foreground">$</span>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">$12.4M</div>
@@ -55,7 +53,7 @@ export default function Analytics() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Average Contract Value
             </CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            <span className="h-4 w-4 text-muted-foreground">📊</span>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">$189K</div>
@@ -70,7 +68,7 @@ export default function Analytics() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Avg. Cycle Time
             </CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <span className="h-4 w-4 text-muted-foreground">⏰</span>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">12 days</div>
@@ -85,7 +83,7 @@ export default function Analytics() {
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Renewal Rate
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <span className="h-4 w-4 text-muted-foreground">📈</span>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">94%</div>

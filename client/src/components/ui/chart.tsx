@@ -68,12 +68,19 @@ const ChartContainer = React.forwardRef<
 ChartContainer.displayName = "Chart"
 
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
-  const colorConfig = Object.entries(config).filter(
-    ([, config]) => config.theme || config.color
+  const colorConfig = React.useMemo(
+    () => Object.entries(config).filter(
+      ([, config]) => config.theme || config.color
+    ),
+    [config]
   )
 
   if (!colorConfig.length) {
     return null
+  }
+
+  const sanitizeCSS = (value: string) => {
+    return value.replace(/[<>"'&]/g, '').replace(/[^a-zA-Z0-9#\-_.,()\s%]/g, '')
   }
 
   return (
@@ -82,13 +89,13 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
         __html: Object.entries(THEMES)
           .map(
             ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
+${sanitizeCSS(prefix)} [data-chart=${sanitizeCSS(id)}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
     const color =
       itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
       itemConfig.color
-    return color ? `  --color-${key}: ${color};` : null
+    return color ? `  --color-${sanitizeCSS(key)}: ${sanitizeCSS(color)};` : null
   })
   .join("\n")}
 }

@@ -20,17 +20,20 @@ interface ContractCardProps {
   onClick?: () => void;
 }
 
+const getColorClasses = (color: string) => 
+  `bg-${color}-500/10 text-${color}-700 dark:text-${color}-400 border-${color}-500/20`;
+
 const statusColors = {
-  active: "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
-  expiring: "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20",
-  expired: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20",
-  draft: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
+  active: getColorClasses('green'),
+  expiring: getColorClasses('yellow'),
+  expired: getColorClasses('red'),
+  draft: getColorClasses('blue'),
 };
 
 const riskColors = {
-  low: "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
-  medium: "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20",
-  high: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20",
+  low: getColorClasses('green'),
+  medium: getColorClasses('yellow'),
+  high: getColorClasses('red'),
 };
 
 export function ContractCard({
@@ -87,11 +90,11 @@ export function ContractCard({
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-center gap-2 flex-wrap">
-          <Badge className={statusColors[status]} data-testid={`badge-status-${id}`}>
+          <Badge className={statusColors[status] || getColorClasses('gray')} data-testid={`badge-status-${id}`}>
             {status.charAt(0).toUpperCase() + status.slice(1)}
           </Badge>
           {riskLevel && (
-            <Badge className={riskColors[riskLevel]} data-testid={`badge-risk-${id}`}>
+            <Badge className={riskColors[riskLevel] || getColorClasses('gray')} data-testid={`badge-risk-${id}`}>
               {riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)} Risk
             </Badge>
           )}

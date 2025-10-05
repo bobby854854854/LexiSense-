@@ -14,6 +14,11 @@ import ContractUpload from "@/pages/contract-upload";
 import AIDrafting from "@/pages/ai-drafting";
 import Analytics from "@/pages/analytics";
 
+const sidebarStyle = {
+  "--sidebar-width": "16rem",
+  "--sidebar-width-icon": "3rem",
+} as React.CSSProperties;
+
 function Router() {
   return (
     <Switch>
@@ -28,16 +33,12 @@ function Router() {
 }
 
 export default function App() {
-  const style = {
-    "--sidebar-width": "16rem",
-    "--sidebar-width-icon": "3rem",
-  };
 
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <TooltipProvider>
-          <SidebarProvider style={style as React.CSSProperties}>
+          <SidebarProvider style={sidebarStyle}>
             <div className="flex h-screen w-full">
               <AppSidebar />
               <div className="flex flex-col flex-1 min-w-0">

@@ -140,7 +140,7 @@ export default function Dashboard() {
                     expiryDate={contract.expiryDate || "N/A"}
                     riskLevel={contract.riskLevel as any}
                     onClick={() => {
-                      console.log("Contract clicked:", contract.id);
+                      console.log("Contract clicked:", String(contract.id).replace(/[\r\n\t]/g, ''));
                     }}
                   />
                 ))}

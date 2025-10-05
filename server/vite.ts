@@ -9,6 +9,7 @@ import { nanoid } from "nanoid";
 const viteLogger = createLogger();
 
 export function log(message: string, source = "express") {
+  const sanitizedSource = String(source).replace(/[\r\n\t]/g, '');
   const formattedTime = new Date().toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
@@ -16,7 +17,7 @@ export function log(message: string, source = "express") {
     hour12: true,
   });
 
-  console.log(`${formattedTime} [${source}] ${message}`);
+  console.log(`${formattedTime} [${source}] ${String(message).replace(/[\r\n\t]/g, '')} - vite.ts:20`);
 }
 
 export async function setupVite(app: Express, server: Server) {
@@ -42,7 +43,7 @@ export async function setupVite(app: Express, server: Server) {
 
   app.use(vite.middlewares);
   app.use("*", async (req, res, next) => {
-    const url = req.originalUrl;
+    const url = req.originalUrl.replace(/[<>"'&]/g, '');
 
     try {
       const clientTemplate = path.resolve(
@@ -59,7 +60,7 @@ export async function setupVite(app: Express, server: Server) {
         `src="/src/main.tsx?v=${nanoid()}"`,
       );
       const page = await vite.transformIndexHtml(url, template);
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
+      res.status(200).set({ "Content-Type": "text/html", "X-Content-Type-Options": "nosniff" }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
       next(e);
@@ -67,8 +68,17 @@ export async function setupVite(app: Express, server: Server) {
   });
 }
 
+function validateAndResolvePath(basePath: string, relativePath: string): string {
+  const resolvedPath = path.join(basePath, relativePath);
+  if (!resolvedPath.startsWith(basePath)) {
+    throw new Error('Invalid path detected');
+  }
+  return resolvedPath;
+}
+
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "public");
+  const basePath = path.resolve(import.meta.dirname);
+  const distPath = validateAndResolvePath(basePath, "public");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
@@ -80,6 +90,10 @@ export function serveStatic(app: Express) {
 
   // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+    const indexPath = path.resolve(distPath, "index.html");
+    if (!indexPath.startsWith(distPath)) {
+      return res.status(403).send('Forbidden');
+    }
+    res.sendFile(indexPath);
   });
 }

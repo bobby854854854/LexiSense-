@@ -57,7 +57,11 @@ export function ActivityFeed({ activities, testId }: ActivityFeedProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         {activities.map((activity) => {
-          const config = activityConfig[activity.type];
+          const config = activityConfig[activity.type] || {
+            icon: FileText,
+            color: "text-gray-600 dark:text-gray-400",
+            bg: "bg-gray-500/10",
+          };
           const Icon = config.icon;
 
           return (

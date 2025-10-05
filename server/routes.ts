@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertContractSchema, type AIInsight } from "@shared/schema";
 import OpenAI from "openai";
+import { contractAnalysisSchema, contractDraftSchema, validateRequest, sanitizeObject } from "./validation";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -63,7 +64,17 @@ Format your response as JSON with this structure:
       temperature: 0.3,
     });
 
-    const result = JSON.parse(completion.choices[0].message.content || "{}");
+    const content = completion.choices[0].message.content || "{}";
+    let result;
+    try {
+      result = JSON.parse(content);
+      // Validate the structure to prevent malicious objects
+      if (typeof result !== 'object' || result === null) {
+        throw new Error('Invalid response format');
+      }
+    } catch {
+      result = {};
+    }
     
     return {
       insights: result.insights || [],
@@ -75,7 +86,7 @@ Format your response as JSON with this structure:
       },
     };
   } catch (error) {
-    console.error("AI analysis error:", error);
+    console.error("AI analysis error: - routes.ts:89", error);
     return {
       insights: [
         {
@@ -124,13 +135,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/contracts/analyze", async (req, res) => {
+  app.post("/api/contracts/analyze", validateRequest(contractAnalysisSchema), async (req: any, res) => {
     try {
-      const { text, title, counterparty, contractType } = req.body;
-      
-      if (!text || !title || !counterparty) {
-        return res.status(400).json({ error: "Missing required fields" });
-      }
+      const sanitizedData = sanitizeObject(req.validatedBody);
+      const { text, title, counterparty, contractType } = sanitizedData;
 
       const analysis = await analyzeContractWithAI(text, title, counterparty);
       
@@ -149,7 +157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(contract);
     } catch (error) {
-      console.error("Contract analysis error:", error);
+      console.error("Contract analysis error: - routes.ts:160", error);
       res.status(500).json({ error: "Failed to analyze contract" });
     }
   });
@@ -178,9 +186,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/contracts/draft", async (req, res) => {
+  app.post("/api/contracts/draft", validateRequest(contractDraftSchema), async (req: any, res) => {
     try {
-      const { contractType, party1, party2, value, terms } = req.body;
+      const sanitizedData = sanitizeObject(req.validatedBody);
+      const { contractType, party1, party2, value, terms } = sanitizedData;
 
       const prompt = `Generate a professional ${contractType} contract between ${party1} and ${party2}.
 
@@ -214,7 +223,7 @@ Make it professional and ready for review.`;
       const generatedContract = completion.choices[0].message.content;
       res.json({ contract: generatedContract });
     } catch (error) {
-      console.error("Contract drafting error:", error);
+      console.error("Contract drafting error: - routes.ts:226", error);
       res.status(500).json({ error: "Failed to generate contract" });
     }
   });

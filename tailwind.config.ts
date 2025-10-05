@@ -1,5 +1,13 @@
 import type { Config } from "tailwindcss";
 
+const createColorScale = (name: string) => ({
+  DEFAULT: `hsl(var(--${name}) / <alpha-value>)`,
+  foreground: `hsl(var(--${name}-foreground) / <alpha-value>)`,
+  border: `var(--${name}-border)`,
+});
+
+const createHslColor = (name: string) => `hsl(var(--${name}) / <alpha-value>)`;
+
 export default {
   darkMode: ["class"],
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
@@ -12,10 +20,10 @@ export default {
       },
       colors: {
         // Flat / base colors (regular buttons)
-        background: "hsl(var(--background) / <alpha-value>)",
-        foreground: "hsl(var(--foreground) / <alpha-value>)",
-        border: "hsl(var(--border) / <alpha-value>)",
-        input: "hsl(var(--input) / <alpha-value>)",
+        background: createHslColor('background'),
+        foreground: createHslColor('foreground'),
+        border: createHslColor('border'),
+        input: createHslColor('input'),
         card: {
           DEFAULT: "hsl(var(--card) / <alpha-value>)",
           foreground: "hsl(var(--card-foreground) / <alpha-value>)",
@@ -26,32 +34,12 @@ export default {
           foreground: "hsl(var(--popover-foreground) / <alpha-value>)",
           border: "hsl(var(--popover-border) / <alpha-value>)",
         },
-        primary: {
-          DEFAULT: "hsl(var(--primary) / <alpha-value>)",
-          foreground: "hsl(var(--primary-foreground) / <alpha-value>)",
-          border: "var(--primary-border)",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary) / <alpha-value>)",
-          foreground: "hsl(var(--secondary-foreground) / <alpha-value>)",
-          border: "var(--secondary-border)",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted) / <alpha-value>)",
-          foreground: "hsl(var(--muted-foreground) / <alpha-value>)",
-          border: "var(--muted-border)",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent) / <alpha-value>)",
-          foreground: "hsl(var(--accent-foreground) / <alpha-value>)",
-          border: "var(--accent-border)",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive) / <alpha-value>)",
-          foreground: "hsl(var(--destructive-foreground) / <alpha-value>)",
-          border: "var(--destructive-border)",
-        },
-        ring: "hsl(var(--ring) / <alpha-value>)",
+        primary: createColorScale('primary'),
+        secondary: createColorScale('secondary'),
+        muted: createColorScale('muted'),
+        accent: createColorScale('accent'),
+        destructive: createColorScale('destructive'),
+        ring: createHslColor('ring'),
         chart: {
           "1": "hsl(var(--chart-1) / <alpha-value>)",
           "2": "hsl(var(--chart-2) / <alpha-value>)",

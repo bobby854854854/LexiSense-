@@ -11,5 +11,11 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// Validate DATABASE_URL to prevent SSRF
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl.startsWith('postgresql://') && !databaseUrl.startsWith('postgres://')) {
+  throw new Error('Invalid DATABASE_URL: Only PostgreSQL connections are allowed');
+}
+
+export const pool = new Pool({ connectionString: databaseUrl });
 export const db = drizzle({ client: pool, schema });

@@ -27,7 +27,7 @@ export function StatCard({
         <Icon className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold" data-testid={`${testId}-value`}>
+        <div className="text-2xl font-bold" data-testid={testId ? `${testId}-value` : undefined}>
           {value}
         </div>
         {trend && (
@@ -37,7 +37,7 @@ export function StatCard({
                 ? "text-green-600 dark:text-green-400"
                 : "text-red-600 dark:text-red-400"
             }`}
-            data-testid={`${testId}-trend`}
+            data-testid={testId ? `${testId}-trend` : undefined}
           >
             {trend}
           </p>

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Search, Upload, Filter } from "lucide-react";
 import { getContracts } from "@/lib/api";
+import type { Contract as UIContract } from "@/components/contract-table";
 import { useLocation } from "wouter";
 
 export default function Contracts() {
@@ -19,22 +20,44 @@ export default function Contracts() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   
-  const { data: contracts = [], isLoading } = useQuery({
+  const { data: contracts = [], isLoading, error } = useQuery({
     queryKey: ["/api/contracts"],
     queryFn: getContracts,
+    retry: 1,
   });
 
-  const filteredContracts = contracts.filter((contract) => {
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-600 mb-4">Failed to load contracts</p>
+        <Button onClick={() => window.location.reload()}>Retry</Button>
+      </div>
+    );
+  }
+
+  // Ensure status values conform to the UI Contract['status'] union
+  function normalizeStatus(s: unknown): UIContract["status"] {
+    if (s === "active" || s === "expiring" || s === "expired" || s === "draft") {
+      return s as UIContract["status"];
+    }
+    return "draft";
+  }
+
+  const filteredContracts = contracts
+    .filter((contract) => {
     const matchesSearch =
-      contract.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contract.counterparty.toLowerCase().includes(searchQuery.toLowerCase());
+      (contract.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (contract.counterparty?.toLowerCase() || '').includes(searchQuery.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || contract.status === statusFilter;
     return matchesSearch && matchesStatus;
-  }).map((contract) => ({
-    ...contract,
-    type: contract.contractType || "N/A",
-  }));
+  })
+    .map((contract) => ({
+        ...contract,
+        // Add a UI-friendly `type` field while ensuring status matches the typed union
+        type: contract.contractType || "N/A",
+        status: normalizeStatus((contract as any).status),
+      })) as UIContract[];
 
   return (
     <div className="space-y-6">
