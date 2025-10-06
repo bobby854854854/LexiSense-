@@ -3,5 +3,6 @@
         "plaintext": true,
         "markdown": true,
         "scminput": true
-    }
+    },
+    "amazonQ.showCodeWithReferences": false
 }
