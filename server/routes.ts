@@ -5,9 +5,23 @@ import { insertContractSchema, type AIInsight } from "@shared/schema";
 import OpenAI from "openai";
 import { contractAnalysisSchema, contractDraftSchema, validateRequest, sanitizeObject } from "./validation";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Provide a safe dev fallback when OPENAI_API_KEY isn't provided so the
+// dev server can start and AI endpoints return a harmless default.
+let openai: any;
+if (process.env.OPENAI_API_KEY) {
+  openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+} else {
+  // Minimal mock matching the portion of the OpenAI client used here.
+  openai = {
+    chat: {
+      completions: {
+        create: async (_opts: any) => {
+          return { choices: [{ message: { content: JSON.stringify({}) } }] };
+        },
+      },
+    },
+  };
+}
 
 async function analyzeContractWithAI(contractText: string, title: string, counterparty: string): Promise<{
   insights: AIInsight[];
