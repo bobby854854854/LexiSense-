@@ -1,11 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage } from "./storage.ts";
 import { insertContractSchema, type AIInsight } from "@shared/schema";
 import OpenAI from "openai";
-import { contractAnalysisSchema, contractDraftSchema, validateRequest, sanitizeObject } from "./validation";
-import { validateAIResponse } from "./aiResponseValidator";
-import { getContractAnalytics } from "./analytics";
+import { contractAnalysisSchema, contractDraftSchema, validateRequest, sanitizeObject } from "./validation.ts";
+import { validateAIResponse } from "./aiResponseValidator.ts";
+import { getContractAnalytics } from "./analytics.ts";
 
 // Provide a safe dev fallback when OPENAI_API_KEY isn't provided so the
 // dev server can start and AI endpoints return a harmless default.
@@ -178,7 +178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "active",
         value: analysis.extractedData.value || "$0",
         effectiveDate: analysis.extractedData.effectiveDate || new Date().toISOString().split('T')[0],
-        expiryDate: analysis.extractedData.expiryDate || null,
+        expiryDate: analysis.extractedData.expiryDate || undefined,
         riskLevel: analysis.extractedData.riskLevel,
         originalText: text,
         aiInsights: analysis.insights as any,
