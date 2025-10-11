@@ -70,7 +70,10 @@ export const insertContractSchema = createInsertSchema(contracts).omit({
   updatedAt: true,
 })
 
+export const updateContractSchema = insertContractSchema.partial()
+
 export type InsertContract = z.infer<typeof insertContractSchema>
+export type UpdateContract = z.infer<typeof updateContractSchema>
 export type Contract = typeof contracts.$inferSelect
 
 export interface AIInsight {

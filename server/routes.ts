@@ -1,7 +1,7 @@
 import type { Express } from 'express'
 import { createServer, type Server } from 'http'
 import { storage } from './storage.ts'
-import { insertContractSchema, type AIInsight } from '@shared/schema'
+import { insertContractSchema, updateContractSchema, type AIInsight } from '@shared/schema'
 import OpenAI from 'openai'
 import {
   contractAnalysisSchema,
@@ -167,7 +167,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/contracts', async (req, res) => {
     try {
       const data = insertContractSchema.parse(req.body)
-      const contract = await storage.createContract(data)
+      const sanitizedData = sanitizeObject(data)
+      const contract = await storage.createContract(sanitizedData)
       res.json(contract)
     } catch (error) {
       res.status(400).json({ error: 'Invalid contract data' })
@@ -209,13 +210,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/contracts/:id', async (req, res) => {
     try {
-      const contract = await storage.updateContract(req.params.id, req.body)
+      const validatedData = updateContractSchema.parse(req.body)
+      const sanitizedData = sanitizeObject(validatedData)
+      const contract = await storage.updateContract(req.params.id, sanitizedData)
       if (!contract) {
         return res.status(404).json({ error: 'Contract not found' })
       }
       res.json(contract)
     } catch (error) {
-      res.status(500).json({ error: 'Failed to update contract' })
+      res.status(400).json({ error: 'Invalid contract data' })
     }
   })
 
