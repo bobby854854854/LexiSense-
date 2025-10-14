@@ -1,4 +1,4 @@
-import type { Express } from 'express'
+import type { Express, Request, Response } from 'express'
 import { createServer, type Server } from 'http'
 import { storage } from './storage.ts'
 import {
@@ -16,9 +16,23 @@ import {
 import { validateAIResponse } from './aiResponseValidator.ts'
 import { getContractAnalytics } from './analytics.ts'
 
+interface ValidatedRequest extends Request {
+  validatedBody: any
+}
+
 // Provide a safe dev fallback when OPENAI_API_KEY isn't provided so the
 // dev server can start and AI endpoints return a harmless default.
-let openai: any
+let openai:
+  | OpenAI
+  | {
+      chat: {
+        completions: {
+          create: (
+            opts: unknown
+          ) => Promise<{ choices: [{ message: { content: string } }] }>
+        }
+      }
+    }
 if (process.env.OPENAI_API_KEY) {
   openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 } else {
@@ -26,8 +40,8 @@ if (process.env.OPENAI_API_KEY) {
   openai = {
     chat: {
       completions: {
-        create: async (_opts: any) => {
-          return { choices: [{ message: { content: JSON.stringify({}) } }] }
+        create: async (_opts: unknown) => {
+          return { choices: [{ message: { content: JSON.stringify({}) } }] as [{ message: { content: string } }] }
         },
       },
     },
@@ -113,7 +127,7 @@ Format your response as JSON with this structure:
           }
         }
       } catch (error) {
-        console.error('JSON parsing error: - routes.ts:102', error)
+        console.error('JSON parsing error: - routes.ts:130', error)
       }
     }
 
@@ -129,7 +143,7 @@ Format your response as JSON with this structure:
       },
     }
   } catch (error) {
-    console.error('AI analysis error: - routes.ts:118', error)
+    console.error('AI analysis error: - routes.ts:146', error)
     return {
       insights: [
         {
@@ -182,7 +196,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post(
     '/api/contracts/analyze',
     validateRequest(contractAnalysisSchema),
-    async (req: any, res) => {
+    async (req: ValidatedRequest, res: Response) => {
       try {
         const sanitizedData = sanitizeObject(req.validatedBody)
         const { text, title, counterparty, contractType } = sanitizedData
@@ -206,7 +220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         res.json(contract)
       } catch (error) {
-        console.error('Contract analysis error: - routes.ts:189', error)
+        console.error('Contract analysis error: - routes.ts:223', error)
         res.status(500).json({ error: 'Failed to analyze contract' })
       }
     }
@@ -246,7 +260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const analytics = await getContractAnalytics()
       res.json(analytics)
     } catch (error) {
-      console.error('Analytics error: - routes.ts:223', error)
+      console.error('Analytics error: - routes.ts:263', error)
       res.status(500).json({ error: 'Failed to fetch analytics' })
     }
   })
@@ -254,7 +268,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post(
     '/api/contracts/draft',
     validateRequest(contractDraftSchema),
-    async (req: any, res) => {
+    async (req: ValidatedRequest, res: Response) => {
       try {
         const sanitizedData = sanitizeObject(req.validatedBody)
         const { contractType, party1, party2, value, terms } = sanitizedData
@@ -292,7 +306,7 @@ Make it professional and ready for review.`
         const generatedContract = completion.choices[0].message.content
         res.json({ contract: generatedContract })
       } catch (error) {
-        console.error('Contract drafting error: - routes.ts:265', error)
+        console.error('Contract drafting error: - routes.ts:309', error)
         res.status(500).json({ error: 'Failed to generate contract' })
       }
     }
