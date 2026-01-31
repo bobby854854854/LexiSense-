@@ -17,6 +17,23 @@ import type { Contract as UIContract } from '@/components/contract-table'
 import { useLocation } from 'wouter'
 import type { Contract } from '@shared/schema'
 
+const MISSING_DATE_SORT_VALUE = Number.NEGATIVE_INFINITY
+
+const parseContractValue = (value?: string | null) => {
+  const cleaned = value?.replace(/[^0-9.-]/g, '') ?? ''
+  const match = cleaned.match(/^-?\d+(\.\d+)?$/)
+  const parsed = match ? parseFloat(match[0]) : 0
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+const parseCreatedAt = (createdAt?: string | null) => {
+  if (!createdAt) {
+    return MISSING_DATE_SORT_VALUE
+  }
+  const parsed = new Date(createdAt).getTime()
+  return Number.isFinite(parsed) ? parsed : MISSING_DATE_SORT_VALUE
+}
+
 export default function Contracts() {
   const [, setLocation] = useLocation()
   const [searchQuery, setSearchQuery] = useState('')
@@ -81,8 +98,8 @@ export default function Contracts() {
       normalizedTitle: contract.title?.toLowerCase() || '',
       normalizedCounterparty: contract.counterparty?.toLowerCase() || '',
       normalizedContractType: contract.contractType?.toLowerCase() || '',
-      parsedValue: parseFloat(contract.value?.replace(/[^\d.-]/g, '') || '0'),
-      createdAtTime: new Date(contract.createdAt || 0).getTime(),
+      parsedValue: parseContractValue(contract.value),
+      createdAtTime: parseCreatedAt(contract.createdAt),
     }))
   }, [contracts])
 
