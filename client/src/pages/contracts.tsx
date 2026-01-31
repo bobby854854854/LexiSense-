@@ -68,18 +68,47 @@ export default function Contracts() {
   }, [contracts])
 
   const filteredContracts = useMemo(() => {
+    const normalizedQuery = searchQuery.toLowerCase()
+    const valueCache = new Map<string, number>()
+    const titleCache = new Map<string, string>()
+    const dateCache = new Map<string, number>()
+
+    const getTitle = (contract: Contract) => {
+      if (titleCache.has(contract.id)) {
+        return titleCache.get(contract.id) as string
+      }
+      const title = contract.title?.toLowerCase() || ''
+      titleCache.set(contract.id, title)
+      return title
+    }
+
+    const getValue = (contract: Contract) => {
+      if (valueCache.has(contract.id)) {
+        return valueCache.get(contract.id) as number
+      }
+      const value = parseFloat(contract.value?.replace(/[^\d.-]/g, '') || '0')
+      valueCache.set(contract.id, value)
+      return value
+    }
+
+    const getDate = (contract: Contract) => {
+      if (dateCache.has(contract.id)) {
+        return dateCache.get(contract.id) as number
+      }
+      const date = new Date(contract.createdAt || 0).getTime()
+      dateCache.set(contract.id, date)
+      return date
+    }
+
     const filtered = contracts.filter((contract) => {
+      const title = contract.title?.toLowerCase() || ''
+      const counterparty = contract.counterparty?.toLowerCase() || ''
+      const contractType = contract.contractType?.toLowerCase() || ''
       const matchesSearch =
-        searchQuery === '' ||
-        (contract.title?.toLowerCase() || '').includes(
-          searchQuery.toLowerCase()
-        ) ||
-        (contract.counterparty?.toLowerCase() || '').includes(
-          searchQuery.toLowerCase()
-        ) ||
-        (contract.contractType?.toLowerCase() || '').includes(
-          searchQuery.toLowerCase()
-        )
+        normalizedQuery === '' ||
+        title.includes(normalizedQuery) ||
+        counterparty.includes(normalizedQuery) ||
+        contractType.includes(normalizedQuery)
 
       const matchesStatus =
         statusFilter === 'all' || contract.status === statusFilter
@@ -95,17 +124,17 @@ export default function Contracts() {
       let aVal, bVal
       switch (sortBy) {
         case 'title':
-          aVal = a.title?.toLowerCase() || ''
-          bVal = b.title?.toLowerCase() || ''
+          aVal = getTitle(a)
+          bVal = getTitle(b)
           break
         case 'value':
-          aVal = parseFloat(a.value?.replace(/[^\d.-]/g, '') || '0')
-          bVal = parseFloat(b.value?.replace(/[^\d.-]/g, '') || '0')
+          aVal = getValue(a)
+          bVal = getValue(b)
           break
         case 'date':
         default:
-          aVal = new Date(a.createdAt || 0).getTime()
-          bVal = new Date(b.createdAt || 0).getTime()
+          aVal = getDate(a)
+          bVal = getDate(b)
       }
 
       if (sortOrder === 'asc') {
