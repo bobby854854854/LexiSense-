@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import multer from 'multer'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { db } from '../db'
 import { contracts } from '../db/schema'
 import { isAuthenticated } from '../auth'
@@ -15,21 +15,100 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB file size limit
 })
 
-// GET /api/contracts
+// GET /api/contracts - List contracts with pagination and selective columns
 router.get('/', isAuthenticated, async (req, res) => {
   if (!req.user) {
     return res.status(401).json({ message: 'Authentication required.' })
   }
+  
   try {
+    // Parse pagination parameters
+    const page = parseInt(req.query.page as string) || 1
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 100) // Max 100
+    const offset = (page - 1) * limit
+    
+    // Parse column selection (comma-separated list of columns)
+    const fields = req.query.fields as string
+    const selectFields: Record<string, boolean> = {}
+    
+    if (fields) {
+      // Always include id for reference
+      selectFields.id = true
+      fields.split(',').forEach(field => {
+        const trimmed = field.trim()
+        if (trimmed) {
+          selectFields[trimmed] = true
+        }
+      })
+    }
+    
+    // Parse sort parameters
+    const sortBy = (req.query.sortBy as string) || 'createdAt'
+    const sortOrder = (req.query.sortOrder as string)?.toLowerCase() === 'asc' ? 'asc' : 'desc'
+    
+    // Parse filter parameters
+    const status = req.query.status as string
+    const contractType = req.query.contractType as string
+    const search = req.query.search as string
+    
+    // Build query
+    let query = db.select(
+      Object.keys(selectFields).length > 0 ? selectFields : undefined
+    ).from(contracts)
+    
+    // Apply filters
+    const conditions = [eq(contracts.userId, req.user.id)]
+    
+    if (status) {
+      conditions.push(eq(contracts.status, status))
+    }
+    
+    if (contractType) {
+      conditions.push(eq(contracts.contractType, contractType))
+    }
+    
+    // For search, we'd need to use SQL LIKE or full-text search
+    // Simplified version for now
+    
+    // Execute query with pagination
     const userContracts = await db.query.contracts.findMany({
       where: eq(contracts.userId, req.user.id),
-      orderBy: (contracts, { desc }) => [desc(contracts.createdAt)],
+      orderBy: (contracts, { desc, asc }) => [
+        sortOrder === 'desc' ? desc(contracts.createdAt) : asc(contracts.createdAt)
+      ],
+      limit: limit,
+      offset: offset,
+      columns: Object.keys(selectFields).length > 0 ? selectFields : undefined,
     })
+    
+    // Get total count for pagination metadata
+    const totalResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(contracts)
+      .where(eq(contracts.userId, req.user.id))
+    
+    const total = Number(totalResult[0]?.count || 0)
+    const totalPages = Math.ceil(total / limit)
+    
     logger.debug('Contracts list retrieved', { 
       userId: req.user.id, 
-      count: userContracts.length 
+      count: userContracts.length,
+      page,
+      limit,
+      total,
     })
-    res.json(userContracts)
+    
+    res.json({
+      data: userContracts,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    })
   } catch (error) {
     logger.error('Failed to fetch contracts:', { 
       error: error instanceof Error ? error.message : 'Unknown error',
