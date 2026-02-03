@@ -2,6 +2,7 @@ import OpenAI from 'openai'
 import { db } from './db'
 import { contracts } from './db/schema'
 import { eq } from 'drizzle-orm'
+import { logger } from './logger'
 import type { AnalysisResults } from '@shared/types'
 
 let openai: OpenAI | null = null
@@ -46,7 +47,10 @@ export async function analyzeContract(
   contractId: string,
   textContent: string,
 ): Promise<void> {
-  console.log(`[AI] Starting analysis for contract ID: ${contractId}`)
+  logger.info('Starting AI contract analysis', { 
+    contractId, 
+    textLength: textContent.length 
+  })
   try {
     const client = getOpenAIClient()
     const response = await client.chat.completions.create({
@@ -76,9 +80,17 @@ export async function analyzeContract(
       })
       .where(eq(contracts.id, contractId))
 
-    console.log(`[AI] Successfully analyzed and updated contract ID: ${contractId}`)
+    logger.info('AI contract analysis completed successfully', { 
+      contractId,
+      parties: analysisResults.parties?.length || 0,
+      risks: analysisResults.highLevelRisks?.length || 0
+    })
   } catch (error) {
-    console.error(`[AI] Analysis failed for contract ID: ${contractId}`, error)
+    logger.error('AI contract analysis failed', { 
+      contractId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    })
     // Update the contract to reflect the failed status
     await db
       .update(contracts)

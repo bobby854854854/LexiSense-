@@ -8,11 +8,16 @@ import authRouter from './api/auth'
 
 import connectPgSimple from 'connect-pg-simple'
 import { pool } from './db'
+import { logger } from './logger'
+import { requestLogger, errorLogger } from './middleware/logging'
 
 const app = express()
 
 // Trust reverse proxy (Render, etc.)
 app.set('trust proxy', 1)
+
+// Request logging middleware
+app.use(requestLogger)
 
 // Security middleware
 app.use(helmet())
@@ -56,10 +61,16 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' })
 })
 
+// Error logging middleware (must be last)
+app.use(errorLogger)
+
 const PORT = process.env.PORT || 3000
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`)
+  logger.info(`Server started on port ${PORT}`, { 
+    nodeEnv: process.env.NODE_ENV,
+    port: PORT,
+  })
 })
 
 export default app

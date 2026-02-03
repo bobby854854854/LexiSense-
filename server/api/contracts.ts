@@ -5,6 +5,7 @@ import { db } from '../db'
 import { contracts } from '../db/schema'
 import { isAuthenticated } from '../auth'
 import { analyzeContract } from '../ai'
+import { logger, auditLogger } from '../logger'
 import type { Contract } from '@shared/types'
 
 const router = Router()
@@ -23,9 +24,16 @@ router.get('/', isAuthenticated, async (req, res) => {
       where: eq(contracts.userId, req.user.id),
       orderBy: (contracts, { desc }) => [desc(contracts.createdAt)],
     })
+    logger.debug('Contracts list retrieved', { 
+      userId: req.user.id, 
+      count: userContracts.length 
+    })
     res.json(userContracts)
   } catch (error) {
-    console.error('Failed to fetch contracts:', error)
+    logger.error('Failed to fetch contracts:', { 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      userId: req.user.id 
+    })
     res.status(500).json({ message: 'Failed to retrieve contracts.' })
   }
 })
@@ -42,12 +50,21 @@ router.get('/:id', isAuthenticated, async (req, res) => {
     })
 
     if (!contract || contract.userId !== req.user.id) {
+      logger.warn('Contract not found or unauthorized access', { 
+        contractId: id, 
+        userId: req.user.id 
+      })
       return res.status(404).json({ message: 'Contract not found.' })
     }
 
+    auditLogger.contractView(req.user.id, id)
     res.json(contract)
   } catch (error) {
-    console.error(`Failed to fetch contract ${id}:`, error)
+    logger.error(`Failed to fetch contract ${id}:`, { 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      contractId: id,
+      userId: req.user.id 
+    })
     res.status(500).json({ message: 'Failed to retrieve contract details.' })
   }
 })
@@ -80,16 +97,31 @@ router.post(
         .returning()
       insertedContract = newContract
 
+      auditLogger.contractUpload(req.user.id, newContract.id, req.file.originalname)
+      logger.info('Contract uploaded successfully', {
+        userId: req.user.id,
+        contractId: newContract.id,
+        filename: req.file.originalname,
+        size: req.file.size,
+      })
+
       res.status(201).json(insertedContract)
 
       // Trigger AI analysis in the background
       if (newContract.id) {
-        analyzeContract(newContract.id, textContent).catch(err =>
-          console.error('Background analysis failed:', err)
-        )
+        analyzeContract(newContract.id, textContent).catch(err => {
+          logger.error('Background analysis failed:', { 
+            error: err instanceof Error ? err.message : 'Unknown error',
+            contractId: newContract.id 
+          })
+        })
       }
     } catch (error) {
-      console.error('File upload processing failed:', error)
+      logger.error('File upload processing failed:', { 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        userId: req.user.id,
+        filename: req.file.originalname 
+      })
       const errorMessage =
         error instanceof Error ? error.message : 'An unknown error occurred.'
 
