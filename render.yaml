@@ -1,0 +1,31 @@
+# Render configuration for backend deployment
+# This file configures the Node.js service for the LexiSense API backend
+
+services:
+  # API Backend Service
+  - type: web
+    name: lexisense-api
+    env: node
+    region: oregon
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false  # Set in Render dashboard
+      - key: OPENAI_API_KEY
+        sync: false  # Set in Render dashboard
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: AWS_ACCESS_KEY_ID
+        sync: false  # Set in Render dashboard
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false  # Set in Render dashboard
+      - key: AWS_REGION
+        value: us-east-1
+      - key: S3_BUCKET_NAME
+        sync: false  # Set in Render dashboard
+    healthCheckPath: /health
+    autoDeploy: true
