@@ -1,48 +1,58 @@
-import { config } from 'dotenv'
+import 'dotenv/config';
 
-config()
+const requiredEnvVars = [
+  'DATABASE_URL',
+  'SESSION_SECRET',
+  'OPENAI_API_KEY',
+  'AWS_ACCESS_KEY_ID',
+  'AWS_SECRET_ACCESS_KEY',
+  'S3_BUCKET_NAME',
+  'SMTP_HOST',
+  'SMTP_USER',
+  'SMTP_PASS',
+  'EMAIL_FROM',
+  'APP_URL'
+];
 
-const requiredEnvVars = ['DATABASE_URL', 'OPENAI_API_KEY', 'SESSION_SECRET']
+const optionalEnvVars = [
+  'REDIS_URL',
+  'LOG_LEVEL',
+  'NODE_ENV'
+];
 
-const optionalEnvVars = ['NODE_ENV', 'PORT']
+console.log('🔍 Production Environment Check\n');
 
-console.log('🔍 Checking environment variables...\n')
-
-let hasErrors = false
+let missingRequired = [];
+let presentOptional = [];
 
 // Check required variables
-requiredEnvVars.forEach((varName) => {
-  const value = process.env[varName]
-  if (!value) {
-    console.log(`❌ ${varName}: Missing (required)`)
-    hasErrors = true
-  } else if (value.includes('your_') || value.includes('_here')) {
-    console.log(`⚠️  ${varName}: Placeholder value detected`)
-    hasErrors = true
+requiredEnvVars.forEach(varName => {
+  if (process.env[varName]) {
+    console.log(`✅ ${varName}: Set`);
   } else {
-    console.log(`✅ ${varName}: Set`)
+    console.log(`❌ ${varName}: Missing`);
+    missingRequired.push(varName);
   }
-})
+});
 
-// Check optional variables
-optionalEnvVars.forEach((varName) => {
-  const value = process.env[varName]
-  if (!value) {
-    console.log(`ℹ️  ${varName}: Not set (optional)`)
+console.log('\n📋 Optional Variables:');
+optionalEnvVars.forEach(varName => {
+  if (process.env[varName]) {
+    console.log(`✅ ${varName}: Set`);
+    presentOptional.push(varName);
   } else {
-    console.log(`✅ ${varName}: ${value}`)
+    console.log(`⚠️  ${varName}: Not set (will use defaults)`);
   }
-})
+});
 
-console.log('\n' + '='.repeat(50))
+console.log('\n📊 Summary:');
+console.log(`Required: ${requiredEnvVars.length - missingRequired.length}/${requiredEnvVars.length}`);
+console.log(`Optional: ${presentOptional.length}/${optionalEnvVars.length}`);
 
-if (hasErrors) {
-  console.log('❌ Environment setup incomplete')
-  console.log('\nNext steps:')
-  console.log('1. Update .env file with real values')
-  console.log('2. Get OpenAI API key from https://platform.openai.com/api-keys')
-  console.log('3. Set up PostgreSQL database')
-  process.exit(1)
+if (missingRequired.length > 0) {
+  console.log('\n❌ Missing required environment variables:');
+  missingRequired.forEach(varName => console.log(`   - ${varName}`));
+  process.exit(1);
 } else {
-  console.log('✅ Environment setup complete')
+  console.log('\n🚀 Environment ready for production!');
 }

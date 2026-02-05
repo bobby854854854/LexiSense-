@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Search, Upload, Filter, X } from 'lucide-react'
+import { Search, Upload, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getContracts } from '@/api'
 import type { Contract as UIContract } from '@/components/contract-table'
 import { useLocation } from 'wouter'
@@ -26,6 +26,8 @@ export default function Contracts() {
   const [selectedContracts, setSelectedContracts] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<'title' | 'date' | 'value'>('date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
 
   const [contracts, setContracts] = useState<Contract[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -130,6 +132,17 @@ export default function Contracts() {
     sortOrder,
   ])
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredContracts.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedContracts = filteredContracts.slice(startIndex, endIndex)
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, statusFilter, typeFilter, riskFilter])
+
   const handleBulkDelete = async () => {
     if (selectedContracts.length === 0) return
     console.log('Bulk delete:', selectedContracts)
@@ -137,10 +150,10 @@ export default function Contracts() {
   }
 
   const handleSelectAll = () => {
-    if (selectedContracts.length === filteredContracts.length) {
+    if (selectedContracts.length === paginatedContracts.length) {
       setSelectedContracts([])
     } else {
-      setSelectedContracts(filteredContracts.map((c) => c.id))
+      setSelectedContracts(paginatedContracts.map((c) => c.id))
     }
   }
 
@@ -149,6 +162,7 @@ export default function Contracts() {
     setStatusFilter('all')
     setTypeFilter('all')
     setRiskFilter('all')
+    setCurrentPage(1)
   }
 
   const activeFiltersCount = [statusFilter, typeFilter, riskFilter].filter(
@@ -343,18 +357,18 @@ export default function Contracts() {
           <div className="flex items-center gap-2 mb-4">
             <Checkbox
               checked={
-                selectedContracts.length === filteredContracts.length &&
-                filteredContracts.length > 0
+                selectedContracts.length === paginatedContracts.length &&
+                paginatedContracts.length > 0
               }
               onCheckedChange={handleSelectAll}
             />
             <span className="text-sm text-muted-foreground">
-              Select all ({filteredContracts.length})
+              Select all on page ({paginatedContracts.length})
             </span>
           </div>
 
           <ContractTable
-            contracts={filteredContracts}
+            contracts={paginatedContracts}
             selectedContracts={selectedContracts}
             onSelectionChange={setSelectedContracts}
             onRowClick={(contract: UIContract) =>
@@ -362,26 +376,60 @@ export default function Contracts() {
             }
           />
 
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <p>
-              Showing {filteredContracts.length} of {contracts.length} contracts
-            </p>
-            <div className="flex gap-2">
+          {/* Pagination */}
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              Showing {startIndex + 1} to {Math.min(endIndex, filteredContracts.length)} of {filteredContracts.length} contracts
+            </div>
+            
+            <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
                 size="sm"
-                disabled
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
                 data-testid="button-prev"
               >
+                <ChevronLeft className="h-4 w-4 mr-1" />
                 Previous
               </Button>
+              
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNum)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+              
               <Button
                 variant="outline"
                 size="sm"
-                disabled
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
                 data-testid="button-next"
               >
                 Next
+                <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
           </div>
