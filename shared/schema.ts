@@ -1,7 +1,8 @@
 import { pgTable, text, timestamp, varchar, jsonb, boolean } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 
 export const users = pgTable('users', {
-  id: varchar('id', { length: 36 }).primaryKey().default('gen_random_uuid()'),
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   username: text('username').notNull().unique(),
   email: text('email').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
@@ -15,7 +16,7 @@ export const users = pgTable('users', {
 })
 
 export const contracts = pgTable('contracts', {
-  id: varchar('id', { length: 36 }).primaryKey().default('gen_random_uuid()'),
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   title: text('title').notNull(),
   counterparty: text('counterparty').notNull(),
   contractType: text('contract_type').notNull(),
@@ -36,7 +37,7 @@ export const contracts = pgTable('contracts', {
 })
 
 export const invitations = pgTable('invitations', {
-  id: varchar('id', { length: 36 }).primaryKey().default('gen_random_uuid()'),
+  id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   email: text('email').notNull(),
   token: text('token').notNull().unique(),
   role: text('role').notNull().default('user'),

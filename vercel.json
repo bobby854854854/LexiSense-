@@ -12,7 +12,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://lexisense-api.onrender.com/api/$1"
+      "dest": "$BACKEND_API_URL/api/$1"
     },
     {
       "src": "/(.*)",
@@ -20,6 +20,7 @@
     }
   ],
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "BACKEND_API_URL": "@backend_api_url"
   }
 }

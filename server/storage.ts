@@ -201,7 +201,9 @@ export async function uploadFileToS3(
   }
 
   // Generate storage key with user isolation
-  const fileExtension = originalName.split('.').pop() || 'bin'
+  // Sanitize file extension to prevent path traversal
+  const rawExtension = originalName.split('.').pop() || 'bin'
+  const fileExtension = rawExtension.replace(/[^a-zA-Z0-9]/g, '') || 'bin'
   const storageKey = `contracts/${userId}/${uuidv4()}.${fileExtension}`
 
   // Upload to S3
@@ -274,7 +276,14 @@ export async function getPresignedUploadUrl(
   userId: string,
   expiresIn: number = 3600
 ): Promise<{ uploadUrl: string; storageKey: string }> {
-  const fileExtension = filename.split('.').pop() || 'bin'
+  // Validate mimeType against allowed types
+  if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
+    throw new Error(`File type ${mimeType} is not allowed. Allowed types: ${ALLOWED_MIME_TYPES.join(', ')}`)
+  }
+  
+  // Sanitize file extension to prevent path traversal
+  const rawExtension = filename.split('.').pop() || 'bin'
+  const fileExtension = rawExtension.replace(/[^a-zA-Z0-9]/g, '') || 'bin'
   const storageKey = `contracts/${userId}/${uuidv4()}.${fileExtension}`
 
   const command = new PutObjectCommand({

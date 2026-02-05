@@ -6,7 +6,7 @@ import os from 'os'
 // Track server start time
 const serverStartTime = Date.now()
 
-// Track request statistics
+// Track request statistics (per-process only - not shared across clustered instances)
 let totalRequests = 0
 let successfulRequests = 0
 let failedRequests = 0
@@ -37,23 +37,12 @@ export async function healthCheck(req: Request, res: Response) {
   const freeMemory = os.freemem()
   const usedMemory = totalMemory - freeMemory
   
-  // CPU usage (average across all cores)
-  const cpus = os.cpus()
-  const cpuCount = cpus.length
-  let totalIdle = 0
-  let totalTick = 0
-  
-  cpus.forEach(cpu => {
-    for (const type in cpu.times) {
-      totalTick += cpu.times[type as keyof typeof cpu.times]
-    }
-    totalIdle += cpu.times.idle
-  })
-  
-  const cpuUsagePercent = 100 - (100 * totalIdle / totalTick)
+  // Note: CPU usage calculation removed as os.cpus() returns cumulative values since boot
+  // which doesn't provide meaningful instantaneous CPU usage
+  const cpuCount = os.cpus().length
   
   // Database health check
-  let dbStatus = 'unknown'
+  let dbStatus: 'healthy' | 'unhealthy'
   let dbResponseTime = 0
   
   try {
@@ -88,7 +77,6 @@ export async function healthCheck(req: Request, res: Response) {
       platform: process.platform,
       nodeVersion: process.version,
       cpuCount,
-      cpuUsage: `${cpuUsagePercent.toFixed(2)}%`,
       memory: {
         total: formatBytes(totalMemory),
         used: formatBytes(usedMemory),
@@ -135,7 +123,9 @@ export async function healthCheck(req: Request, res: Response) {
 }
 
 /**
- * Simple health check for load balancers
+ * Simple health check for load balancers (liveness probe)
+ * Note: This always returns OK. For readiness checks that verify
+ * database connectivity, use /api/health instead.
  */
 export function simpleHealthCheck(req: Request, res: Response) {
   res.status(200).send('OK')

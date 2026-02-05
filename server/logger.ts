@@ -2,6 +2,7 @@ import winston from 'winston'
 import DailyRotateFile from 'winston-daily-rotate-file'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import fs from 'fs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -27,8 +28,11 @@ const consoleFormat = winston.format.combine(
   })
 )
 
-// Create logs directory
+// Create logs directory if it doesn't exist
 const logsDir = path.join(__dirname, '../logs')
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true })
+}
 
 // Transport configurations
 const transports: winston.transport[] = []

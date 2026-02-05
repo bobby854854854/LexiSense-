@@ -21,8 +21,13 @@ This guide covers deploying LexiSense to production using Vercel (frontend) and 
 
 2. **AWS S3 Setup**:
    ```bash
-   # Create S3 bucket
-   aws s3api create-bucket --bucket lexisense-contracts --region us-east-1
+   # Create S3 bucket in us-east-1 (special case: no LocationConstraint needed)
+   aws s3api create-bucket --bucket lexisense-contracts
+   
+   # For other regions, specify LocationConstraint (example: eu-west-1)
+   # aws s3api create-bucket --bucket lexisense-contracts \
+   #   --region eu-west-1 \
+   #   --create-bucket-configuration LocationConstraint=eu-west-1
    
    # Configure CORS
    aws s3api put-bucket-cors --bucket lexisense-contracts --cors-configuration file://s3-cors.json

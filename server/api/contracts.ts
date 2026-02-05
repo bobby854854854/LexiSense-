@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import multer from 'multer'
-import { eq, sql } from 'drizzle-orm'
+import { eq, sql, and } from 'drizzle-orm'
 import { db } from '../db'
 import { contracts } from '../db/schema'
 import { isAuthenticated } from '../auth'
@@ -49,33 +49,37 @@ router.get('/', isAuthenticated, async (req, res) => {
     // Parse filter parameters
     const status = req.query.status as string
     const contractType = req.query.contractType as string
-    const search = req.query.search as string
     
-    // Build query
-    let query = db.select(
-      Object.keys(selectFields).length > 0 ? selectFields : undefined
-    ).from(contracts)
-    
-    // Apply filters
-    const conditions = [eq(contracts.userId, req.user.id)]
+    // Build where conditions
+    const whereConditions = [eq(contracts.userId, req.user.id)]
     
     if (status) {
-      conditions.push(eq(contracts.status, status))
+      whereConditions.push(eq(contracts.status, status))
     }
     
     if (contractType) {
-      conditions.push(eq(contracts.contractType, contractType))
+      whereConditions.push(eq(contracts.contractType, contractType))
     }
     
-    // For search, we'd need to use SQL LIKE or full-text search
-    // Simplified version for now
+    const whereClause = whereConditions.length > 1 ? and(...whereConditions) : whereConditions[0]
     
     // Execute query with pagination
     const userContracts = await db.query.contracts.findMany({
-      where: eq(contracts.userId, req.user.id),
-      orderBy: (contracts, { desc, asc }) => [
-        sortOrder === 'desc' ? desc(contracts.createdAt) : asc(contracts.createdAt)
-      ],
+      where: whereClause,
+      orderBy: (contracts, { desc, asc }) => {
+        // Map sortBy to actual column
+        const sortableColumns = {
+          createdAt: contracts.createdAt,
+          updatedAt: contracts.updatedAt,
+          status: contracts.status,
+          contractType: contracts.contractType,
+          title: contracts.title,
+        } as const
+        
+        const sortColumn = sortableColumns[sortBy as keyof typeof sortableColumns] ?? contracts.createdAt
+        
+        return [sortOrder === 'desc' ? desc(sortColumn) : asc(sortColumn)]
+      },
       limit: limit,
       offset: offset,
       columns: Object.keys(selectFields).length > 0 ? selectFields : undefined,
@@ -85,7 +89,7 @@ router.get('/', isAuthenticated, async (req, res) => {
     const totalResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(contracts)
-      .where(eq(contracts.userId, req.user.id))
+      .where(whereClause)
     
     const total = Number(totalResult[0]?.count || 0)
     const totalPages = Math.ceil(total / limit)

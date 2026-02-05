@@ -159,20 +159,17 @@ export class BackgroundJobScheduler {
     // Run deletion every day at 3 AM
     const scheduleDelete = () => {
       const now = new Date()
+      const isPast3AM = now.getHours() >= 3
+      
       const next3AM = new Date(
         now.getFullYear(),
         now.getMonth(),
-        now.getDate() + 1,
+        now.getDate() + (isPast3AM ? 1 : 0),
         3,
         0,
         0,
         0
       )
-      
-      // If it's already past 3 AM, schedule for tomorrow
-      if (now.getHours() >= 3) {
-        next3AM.setDate(next3AM.getDate() + 1)
-      }
       
       const timeUntil3AM = next3AM.getTime() - now.getTime()
       

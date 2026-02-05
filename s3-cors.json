@@ -3,9 +3,7 @@
     {
       "AllowedOrigins": [
         "http://localhost:5173",
-        "http://localhost:3000",
-        "https://*.vercel.app",
-        "https://lexisense.vercel.app"
+        "http://localhost:3000"
       ],
       "AllowedMethods": [
         "GET",
@@ -24,5 +22,6 @@
       ],
       "MaxAgeSeconds": 3600
     }
-  ]
+  ],
+  "note": "S3 CORS doesn't support wildcard subdomains like 'https://*.vercel.app'. For production, add specific Vercel deployment URLs here, or use CloudFront with a custom domain for better CORS handling."
 }
