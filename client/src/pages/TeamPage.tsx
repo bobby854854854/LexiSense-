@@ -1,146 +1,218 @@
+import { useState, useEffect } from 'react';
+import { Users, Mail, Plus, Trash2, UserCheck, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
-import { useState, useEffect } from 'react'
-import Layout from '@/components/layout/Layout'
-import TeamMemberList from '@/components/features/team/TeamMemberList'
-import InvitationsList from '@/components/features/team/InvitationsList'
-import InviteMemberDialog from '@/components/features/team/InviteMemberDialog'
-import { useAuth } from '@/hooks/useAuth'
-import { UserPlus, Loader2, Users } from 'lucide-react'
-import { api } from '@/lib/api'
-import type { TeamMember, InvitationWithCreator } from '@shared/types'
-import { toast } from 'sonner'
+interface TeamMember {
+  id: string;
+  email: string;
+  name?: string;
+  role: string;
+  status: 'active' | 'pending';
+  joinedAt: string;
+}
 
 export default function TeamPage() {
-  const { user } = useAuth()
-  const [members, setMembers] = useState<TeamMember[]>([])
-  const [invitations, setInvitations] = useState<InvitationWithCreator[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showInviteDialog, setShowInviteDialog] = useState(false)
-
-  const isAdmin = user?.role === 'admin'
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [inviting, setInviting] = useState(false);
 
   useEffect(() => {
-    fetchTeamData()
-  }, [])
+    fetchTeamMembers();
+  }, []);
 
-  const fetchTeamData = async () => {
+  const fetchTeamMembers = async () => {
     try {
-      setLoading(true)
-      const [membersData, invitationsData] = await Promise.all([
-        api.getTeamMembers(),
-        isAdmin ? api.getInvitations() : Promise.resolve([]),
-      ])
-      setMembers(membersData)
-      setInvitations(invitationsData)
+      // Mock data for now - replace with actual API call
+      setMembers([
+        {
+          id: '1',
+          email: 'admin@company.com',
+          name: 'Admin User',
+          role: 'admin',
+          status: 'active',
+          joinedAt: '2024-01-15T10:00:00Z'
+        },
+        {
+          id: '2',
+          email: 'user@company.com',
+          name: 'Team Member',
+          role: 'member',
+          status: 'active',
+          joinedAt: '2024-01-20T14:30:00Z'
+        },
+        {
+          id: '3',
+          email: 'pending@company.com',
+          role: 'member',
+          status: 'pending',
+          joinedAt: '2024-02-01T09:15:00Z'
+        }
+      ]);
     } catch (error) {
-      toast.error('Failed to load team data')
+      toast.error('Failed to load team members');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const handleInviteSuccess = () => {
-    fetchTeamData()
-  }
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail.trim()) return;
 
-  const handleMemberUpdated = () => {
-    fetchTeamData()
-  }
+    try {
+      setInviting(true);
+      // Replace with actual API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast.success(`Invitation sent to ${inviteEmail}`);
+      setInviteEmail('');
+      fetchTeamMembers();
+    } catch (error) {
+      toast.error('Failed to send invitation');
+    } finally {
+      setInviting(false);
+    }
+  };
 
-  const handleInvitationCancelled = () => {
-    fetchTeamData()
-  }
+  const handleRemoveMember = async (memberId: string) => {
+    if (!confirm('Are you sure you want to remove this team member?')) return;
+
+    try {
+      // Replace with actual API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setMembers(prev => prev.filter(m => m.id !== memberId));
+      toast.success('Team member removed');
+    } catch (error) {
+      toast.error('Failed to remove team member');
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'active':
+        return <Badge variant="default" className="bg-green-100 text-green-800">Active</Badge>;
+      case 'pending':
+        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const getRoleDisplay = (role: string) => {
+    return role.charAt(0).toUpperCase() + role.slice(1);
+  };
 
   if (loading) {
     return (
-      <Layout>
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        </div>
-      </Layout>
-    )
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   return (
-    <Layout>
-      <div className="space-y-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Team</h1>
-            <p className="mt-2 text-gray-600">
-              Manage your organization's team members and invitations
-            </p>
-          </div>
-          {isAdmin && (
-            <button
-              onClick={() => setShowInviteDialog(true)}
-              className="flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
-            >
-              <UserPlus className="w-4 h-4 mr-2" />
-              Invite Member
-            </button>
-          )}
-        </div>
-
-        {/* Admin Notice */}
-        {!isAdmin && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-800">
-              Only administrators can invite new members or manage team roles.
-              Contact your organization admin if you need to make changes.
-            </p>
-          </div>
-        )}
-
-        {/* Pending Invitations */}
-        {isAdmin && invitations.length > 0 && (
-          <InvitationsList
-            invitations={invitations}
-            onInvitationCancelled={handleInvitationCancelled}
-          />
-        )}
-
-        {/* Team Members */}
-        <TeamMemberList members={members} onMemberUpdated={handleMemberUpdated} />
-
-        {/* Role Descriptions */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <Users className="w-5 h-5 mr-2" />
-            Role Descriptions
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-              <h3 className="text-sm font-semibold text-purple-900 mb-2">Admin</h3>
-              <p className="text-xs text-purple-800">
-                Full access to all features including uploading contracts, viewing analysis,
-                inviting team members, and managing roles.
-              </p>
-            </div>
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <h3 className="text-sm font-semibold text-blue-900 mb-2">Member</h3>
-              <p className="text-xs text-blue-800">
-                Can upload contracts, view all contracts and analysis, and chat with contracts.
-                Cannot manage team members or roles.
-              </p>
-            </div>
-            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">Viewer</h3>
-              <p className="text-xs text-gray-800">
-                Read-only access to view contracts and analysis. Cannot upload new contracts
-                or manage team members.
-              </p>
-            </div>
-          </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Team Management</h1>
+          <p className="text-gray-600 mt-2">Manage your team members and invitations</p>
         </div>
       </div>
 
-      {/* Invite Dialog */}
-      <InviteMemberDialog
-        isOpen={showInviteDialog}
-        onClose={() => setShowInviteDialog(false)}
-        onInviteSuccess={handleInviteSuccess}
-      />
-    </Layout>
-  )
+      {/* Invite Form */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Mail className="w-5 h-5 mr-2" />
+            Invite Team Member
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleInvite} className="flex gap-4">
+            <Input
+              type="email"
+              placeholder="Enter email address"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              className="flex-1"
+            />
+            <Button type="submit" disabled={inviting || !inviteEmail.trim()}>
+              {inviting ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              ) : (
+                <Plus className="w-4 h-4 mr-2" />
+              )}
+              Send Invite
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Team Members */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Users className="w-5 h-5 mr-2" />
+            Team Members ({members.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {members.map((member) => (
+              <div
+                key={member.id}
+                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                    {member.status === 'active' ? (
+                      <UserCheck className="w-5 h-5 text-primary" />
+                    ) : (
+                      <Clock className="w-5 h-5 text-yellow-600" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <p className="font-medium text-gray-900">
+                        {member.name || member.email}
+                      </p>
+                      {getStatusBadge(member.status)}
+                    </div>
+                    <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+                      <span>{member.email}</span>
+                      <span>•</span>
+                      <span>{getRoleDisplay(member.role)}</span>
+                      <span>•</span>
+                      <span>
+                        {member.status === 'active' ? 'Joined' : 'Invited'}{' '}
+                        {new Date(member.joinedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {member.role !== 'admin' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRemoveMember(member.id)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
