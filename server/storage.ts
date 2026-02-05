@@ -74,13 +74,13 @@ async function validateFileType(
   // Use file-type library for additional validation
   try {
     const detectedType = await fileTypeFromBuffer(buffer)
+
+    // For text files, file-type might not detect anything, which is okay
+    if (!detectedType && declaredMimeType === 'text/plain') {
+      return { valid: true }
+    }
     
     if (detectedType && detectedType.mime !== declaredMimeType) {
-      // For text files, file-type might not detect anything, which is okay
-      if (declaredMimeType === 'text/plain' && !detectedType) {
-        return { valid: true }
-      }
-      
       logger.warn('File type mismatch detected', {
         declaredType: declaredMimeType,
         detectedType: detectedType.mime,
