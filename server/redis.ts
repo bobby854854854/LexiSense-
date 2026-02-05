@@ -23,7 +23,7 @@ export async function createRedisClient() {
         reconnectStrategy: (retries) => {
           if (retries > 10) {
             logger.error('Redis reconnection failed after 10 attempts')
-            return new Error('Redis reconnection failed')
+            return false
           }
           return Math.min(retries * 100, 3000)
         },
