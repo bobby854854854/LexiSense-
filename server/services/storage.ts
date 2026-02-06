@@ -169,3 +169,32 @@ class S3StorageService {
 }
 
 export const s3Storage = new S3StorageService()
+
+// Export helper functions for backward compatibility
+export async function uploadFileToStorage(
+  buffer: Buffer,
+  originalName: string,
+  userId: string
+): Promise<string> {
+  const stream = Readable.from(buffer)
+  const contentType = 'application/octet-stream'
+  const result = await s3Storage.uploadFile(
+    stream,
+    originalName,
+    userId,
+    contentType
+  )
+  return result.key
+}
+
+export async function extractTextFromFile(
+  buffer: Buffer,
+  mimeType: string
+): Promise<string> {
+  // Simple text extraction - for PDF use pdf-parse library
+  if (mimeType === 'text/plain') {
+    return buffer.toString('utf-8')
+  }
+  // For other types, return placeholder
+  return 'Text extraction not implemented for this file type'
+}
