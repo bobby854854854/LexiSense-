@@ -1,1 +1,1 @@
-export const Calendar = () => <div>Calendar</div>;
+export const Calendar = () => <div>Calendar</div>

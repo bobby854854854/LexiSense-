@@ -1,17 +1,16 @@
-
 import { useState, useEffect } from 'react'
 import { useParams, useLocation } from 'wouter'
 import Layout from '@/components/layout/Layout'
 import ChatInterface from '@/components/features/chat/ChatInterface'
-import { 
-  FileText, 
-  Calendar, 
-  Users, 
-  AlertTriangle, 
-  Loader2, 
+import {
+  FileText,
+  Calendar,
+  Users,
+  AlertTriangle,
+  Loader2,
   ArrowLeft,
   MessageSquare,
-  Trash2
+  Trash2,
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import type { ContractWithUploader } from '@shared/types'
@@ -22,7 +21,7 @@ export default function ContractDetailPage() {
   const params = useParams()
   const id = params.id as string
   const [, setLocation] = useLocation()
-  
+
   const [contract, setContract] = useState<ContractWithUploader | null>(null)
   const [loading, setLoading] = useState(true)
   const [showChat, setShowChat] = useState(false)
@@ -197,7 +196,10 @@ export default function ContractDetailPage() {
                   </h2>
                   <div className="space-y-3">
                     {contract.aiAnalysis.parties.map((party, index) => (
-                      <div key={index} className="pb-3 border-b border-gray-200 last:border-0 last:pb-0">
+                      <div
+                        key={index}
+                        className="pb-3 border-b border-gray-200 last:border-0 last:pb-0"
+                      >
                         <p className="text-sm font-medium text-gray-900">
                           {party.name}
                         </p>
@@ -219,7 +221,10 @@ export default function ContractDetailPage() {
                   </h2>
                   <div className="space-y-3">
                     {contract.aiAnalysis.dates.map((date, index) => (
-                      <div key={index} className="pb-3 border-b border-gray-200 last:border-0 last:pb-0">
+                      <div
+                        key={index}
+                        className="pb-3 border-b border-gray-200 last:border-0 last:pb-0"
+                      >
                         <p className="text-sm font-medium text-gray-900">
                           {date.name}
                         </p>

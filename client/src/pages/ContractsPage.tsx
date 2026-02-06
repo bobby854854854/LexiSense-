@@ -1,4 +1,3 @@
-
 import Layout from '@/components/layout/Layout'
 import { FileText, Upload } from 'lucide-react'
 
@@ -79,7 +78,9 @@ export default function TeamPage() {
         {/* Team members list */}
         <div className="bg-white rounded-lg border border-gray-200">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Team Members</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Team Members
+            </h2>
           </div>
           <div className="divide-y divide-gray-200">
             <div className="px-6 py-4 flex items-center justify-between">
@@ -88,7 +89,9 @@ export default function TeamPage() {
                   <Users className="w-5 h-5 text-primary" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-900">{user?.email}</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {user?.email}
+                  </p>
                   <p className="text-sm text-gray-500">
                     {user?.role === 'admin' ? 'Admin' : user?.role}
                   </p>

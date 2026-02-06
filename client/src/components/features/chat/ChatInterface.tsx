@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react'
 import { Send, Loader2, Bot, User } from 'lucide-react'
 import { api } from '@/lib/api'
@@ -40,7 +39,7 @@ export default function ChatInterface({ contractId }: ChatInterfaceProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!input.trim() || isLoading) return
 
     const userMessage: Message = {
@@ -55,8 +54,11 @@ export default function ChatInterface({ contractId }: ChatInterfaceProps) {
     setIsLoading(true)
 
     try {
-      const response = await api.chatWithContract(contractId, userMessage.content)
-      
+      const response = await api.chatWithContract(
+        contractId,
+        userMessage.content
+      )
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -66,8 +68,10 @@ export default function ChatInterface({ contractId }: ChatInterfaceProps) {
 
       setMessages((prev) => [...prev, assistantMessage])
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to get response')
-      
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to get response'
+      )
+
       // Remove the user message if the request failed
       setMessages((prev) => prev.filter((m) => m.id !== userMessage.id))
     } finally {
@@ -105,19 +109,21 @@ export default function ChatInterface({ contractId }: ChatInterfaceProps) {
             </p>
             <div className="mt-4 space-y-2">
               <button
-                onClick={() => setInput("What are the main obligations in this contract?")}
+                onClick={() =>
+                  setInput('What are the main obligations in this contract?')
+                }
                 className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
               >
                 💼 What are the main obligations in this contract?
               </button>
               <button
-                onClick={() => setInput("What are the termination conditions?")}
+                onClick={() => setInput('What are the termination conditions?')}
                 className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
               >
                 📋 What are the termination conditions?
               </button>
               <button
-                onClick={() => setInput("Are there any renewal clauses?")}
+                onClick={() => setInput('Are there any renewal clauses?')}
                 className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
               >
                 🔄 Are there any renewal clauses?
@@ -133,7 +139,9 @@ export default function ChatInterface({ contractId }: ChatInterfaceProps) {
               >
                 <div
                   className={`flex items-start space-x-3 max-w-[80%] ${
-                    message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
+                    message.role === 'user'
+                      ? 'flex-row-reverse space-x-reverse'
+                      : ''
                   }`}
                 >
                   <div
@@ -156,7 +164,9 @@ export default function ChatInterface({ contractId }: ChatInterfaceProps) {
                         : 'bg-gray-100 text-gray-900'
                     }`}
                   >
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    <p className="text-sm whitespace-pre-wrap">
+                      {message.content}
+                    </p>
                   </div>
                 </div>
               </div>

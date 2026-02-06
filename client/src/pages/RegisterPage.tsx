@@ -15,7 +15,7 @@ export default function RegisterPage() {
 
     try {
       // Mock registration - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 1000))
       toast.success('Organization created successfully')
       setLocation('/dashboard')
     } catch (error) {
@@ -34,7 +34,10 @@ export default function RegisterPage() {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
-            <Link href="/login" className="font-medium text-primary hover:underline">
+            <Link
+              href="/login"
+              className="font-medium text-primary hover:underline"
+            >
               sign in to existing account
             </Link>
           </p>
@@ -42,7 +45,10 @@ export default function RegisterPage() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
             <div>
-              <label htmlFor="org-name" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="org-name"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Organization Name
               </label>
               <input
@@ -58,7 +64,10 @@ export default function RegisterPage() {
               />
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Email address
               </label>
               <input
@@ -74,7 +83,10 @@ export default function RegisterPage() {
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Password
               </label>
               <input

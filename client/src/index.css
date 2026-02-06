@@ -12,10 +12,15 @@
 
   body {
     @apply antialiased;
-    font-feature-settings: "rounding" 1;
+    font-feature-settings: 'rounding' 1;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-bold tracking-tight;
   }
 
@@ -48,11 +53,15 @@
   }
 
   /* Form improvements */
-  input, button, select, textarea {
+  input,
+  button,
+  select,
+  textarea {
     @apply focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all;
   }
 
-  input::placeholder, textarea::placeholder {
+  input::placeholder,
+  textarea::placeholder {
     @apply text-muted-foreground;
   }
 

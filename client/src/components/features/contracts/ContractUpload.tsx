@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react'
 import { Upload, FileText, X, Loader2 } from 'lucide-react'
 import { api } from '@/lib/api'
@@ -9,7 +8,9 @@ interface ContractUploadProps {
   onUploadComplete?: () => void
 }
 
-export default function ContractUpload({ onUploadComplete }: ContractUploadProps) {
+export default function ContractUpload({
+  onUploadComplete,
+}: ContractUploadProps) {
   const [file, setFile] = useState<File | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
@@ -91,14 +92,14 @@ export default function ContractUpload({ onUploadComplete }: ContractUploadProps
       }, 200)
 
       await api.uploadContract(file)
-      
+
       clearInterval(progressInterval)
       setUploadProgress(100)
 
       toast.success('Contract uploaded and analyzed successfully')
       setFile(null)
       setUploadProgress(0)
-      
+
       if (onUploadComplete) {
         onUploadComplete()
       }
@@ -155,7 +156,9 @@ export default function ContractUpload({ onUploadComplete }: ContractUploadProps
                 <p className="text-sm font-medium text-gray-900 truncate">
                   {file.name}
                 </p>
-                <p className="text-xs text-gray-500">{formatBytes(file.size)}</p>
+                <p className="text-xs text-gray-500">
+                  {formatBytes(file.size)}
+                </p>
               </div>
               {!isUploading && (
                 <button

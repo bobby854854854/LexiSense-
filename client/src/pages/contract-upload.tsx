@@ -27,9 +27,16 @@ export default function ContractUpload() {
   const [contractText, setContractText] = useState('')
 
   const analyzeMutation = useMutation({
-    mutationFn: async (data: { text: string; title: string; counterparty: string; contractType: string }) => {
+    mutationFn: async (data: {
+      text: string
+      title: string
+      counterparty: string
+      contractType: string
+    }) => {
       // Create a File object from the text
-      const file = new File([data.text], `${data.title}.txt`, { type: 'text/plain' })
+      const file = new File([data.text], `${data.title}.txt`, {
+        type: 'text/plain',
+      })
       return uploadContract(file)
     },
     onSuccess: () => {

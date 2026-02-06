@@ -21,20 +21,20 @@ app.use(apiRateLimit)
 
 // Request logging middleware
 app.use((req, res, next) => {
-  const start = Date.now();
+  const start = Date.now()
   res.on('finish', () => {
-    const duration = Date.now() - start;
+    const duration = Date.now() - start
     logger.info('HTTP Request', {
       method: req.method,
       url: req.url,
       status: res.statusCode,
       duration,
       ip: req.ip,
-      userAgent: req.get('User-Agent')
-    });
-  });
-  next();
-});
+      userAgent: req.get('User-Agent'),
+    })
+  })
+  next()
+})
 
 // Body parsing
 app.use(express.json())
@@ -66,18 +66,18 @@ app.use('/api/auth', authRateLimit, authRouter)
 
 // Health check with performance metrics
 app.get('/api/health', async (req, res) => {
-  const startTime = Date.now();
-  
+  const startTime = Date.now()
+
   try {
     // Database health check
-    const dbStart = Date.now();
-    await pool.query('SELECT 1');
-    const dbLatency = Date.now() - dbStart;
-    
+    const dbStart = Date.now()
+    await pool.query('SELECT 1')
+    const dbLatency = Date.now() - dbStart
+
     // System metrics
-    const memUsage = process.memoryUsage();
-    const cpuUsage = process.cpuUsage();
-    
+    const memUsage = process.memoryUsage()
+    const cpuUsage = process.cpuUsage()
+
     const health = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
@@ -90,33 +90,33 @@ app.get('/api/health', async (req, res) => {
         memory: {
           used: Math.round(memUsage.heapUsed / 1024 / 1024),
           total: Math.round(memUsage.heapTotal / 1024 / 1024),
-          external: Math.round(memUsage.external / 1024 / 1024)
+          external: Math.round(memUsage.external / 1024 / 1024),
         },
         cpu: {
           user: cpuUsage.user,
-          system: cpuUsage.system
+          system: cpuUsage.system,
         },
         system: {
           loadAvg: os.loadavg(),
           freeMem: Math.round(os.freemem() / 1024 / 1024),
-          totalMem: Math.round(os.totalmem() / 1024 / 1024)
-        }
+          totalMem: Math.round(os.totalmem() / 1024 / 1024),
+        },
       },
       services: {
         database: 'healthy',
         redis: process.env.REDIS_URL ? 'configured' : 'memory',
-        s3: process.env.AWS_ACCESS_KEY_ID ? 'configured' : 'local'
-      }
-    };
-    
-    res.json(health);
+        s3: process.env.AWS_ACCESS_KEY_ID ? 'configured' : 'local',
+      },
+    }
+
+    res.json(health)
   } catch (error) {
-    logger.error('Health check failed:', error);
+    logger.error('Health check failed:', error)
     res.status(503).json({
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
-      error: 'Service unavailable'
-    });
+      error: 'Service unavailable',
+    })
   }
 })
 
@@ -125,9 +125,9 @@ const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
   logger.info(`Server started on port ${PORT}`, {
     environment: process.env.NODE_ENV,
-    version: process.env.npm_package_version || '1.0.0'
-  });
-  console.log(`Server is running on port ${PORT}`);
+    version: process.env.npm_package_version || '1.0.0',
+  })
+  console.log(`Server is running on port ${PORT}`)
 })
 
 export default app

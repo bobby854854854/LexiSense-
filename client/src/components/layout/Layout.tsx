@@ -1,15 +1,7 @@
-
 import { ReactNode } from 'react'
 import { Link, useLocation } from 'wouter'
 import { useAuth } from '@/hooks/useAuth'
-import { 
-  FileText, 
-  Users, 
-  LayoutDashboard, 
-  LogOut,
-  Menu,
-  X
-} from 'lucide-react'
+import { FileText, Users, LayoutDashboard, LogOut, Menu, X } from 'lucide-react'
 import { useState } from 'react'
 
 interface LayoutProps {
@@ -38,7 +30,10 @@ export default function Layout({ children }: LayoutProps) {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
-              <Link href="/dashboard" className="text-xl font-bold text-primary">
+              <Link
+                href="/dashboard"
+                className="text-xl font-bold text-primary"
+              >
                 LexiSense
               </Link>
             </div>
@@ -46,7 +41,8 @@ export default function Layout({ children }: LayoutProps) {
             {/* Desktop navigation */}
             <nav className="hidden md:flex space-x-4">
               {navigation.map((item) => {
-                const isActive = location === item.href || location.startsWith(item.href + '/')
+                const isActive =
+                  location === item.href || location.startsWith(item.href + '/')
                 const Icon = item.icon
                 return (
                   <Link
@@ -116,7 +112,9 @@ export default function Layout({ children }: LayoutProps) {
               )
             })}
             <div className="pt-4 pb-3 border-t border-gray-200">
-              <div className="px-3 py-2 text-sm text-gray-700">{user?.email}</div>
+              <div className="px-3 py-2 text-sm text-gray-700">
+                {user?.email}
+              </div>
               <button
                 onClick={() => {
                   handleLogout()
@@ -175,9 +173,7 @@ export default function DashboardPage() {
       <div className="space-y-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="mt-2 text-gray-600">
-            Welcome back, {user?.email}
-          </p>
+          <p className="mt-2 text-gray-600">Welcome back, {user?.email}</p>
         </div>
 
         {/* Stats */}

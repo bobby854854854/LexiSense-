@@ -1,4 +1,3 @@
-
 import type {
   User,
   LoginRequest,
@@ -23,10 +22,7 @@ class ApiClient {
     this.csrfToken = data.csrfToken
   }
 
-  private async request<T>(
-    url: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  private async request<T>(url: string, options: RequestInit = {}): Promise<T> {
     const headers: HeadersInit = {
       ...options.headers,
     }
@@ -142,7 +138,9 @@ class ApiClient {
     return this.request<InvitationWithCreator[]>('/api/team/invitations')
   }
 
-  async inviteMember(data: InviteMemberRequest): Promise<InvitationWithCreator> {
+  async inviteMember(
+    data: InviteMemberRequest
+  ): Promise<InvitationWithCreator> {
     return this.request<InvitationWithCreator>('/api/team/invite', {
       method: 'POST',
       body: JSON.stringify(data),

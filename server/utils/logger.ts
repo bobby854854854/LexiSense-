@@ -1,11 +1,11 @@
-import winston from 'winston';
-import path from 'path';
-import fs from 'fs';
+import winston from 'winston'
+import path from 'path'
+import fs from 'fs'
 
 // Ensure logs directory exists
-const logDir = process.env.LOG_DIR || './logs';
+const logDir = process.env.LOG_DIR || './logs'
 if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
+  fs.mkdirSync(logDir, { recursive: true })
 }
 
 // Custom format for structured logging
@@ -13,7 +13,7 @@ const logFormat = winston.format.combine(
   winston.format.timestamp(),
   winston.format.errors({ stack: true }),
   winston.format.json()
-);
+)
 
 // Create logger instance
 export const logger = winston.createLogger({
@@ -42,16 +42,18 @@ export const logger = winston.createLogger({
       maxFiles: 10,
     }),
   ],
-});
+})
 
 // Console logging for development
 if (process.env.NODE_ENV !== 'production' && !process.env.SILENT_LOGS) {
-  logger.add(new winston.transports.Console({
-    format: winston.format.combine(
-      winston.format.colorize(),
-      winston.format.simple()
-    )
-  }));
+  logger.add(
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      ),
+    })
+  )
 }
 
 // Audit trail helper
@@ -62,8 +64,8 @@ export const auditLog = (action: string, userId?: string, details?: any) => {
     timestamp: new Date().toISOString(),
     details,
     ip: details?.ip,
-    userAgent: details?.userAgent
-  });
-};
+    userAgent: details?.userAgent,
+  })
+}
 
-export default logger;
+export default logger

@@ -1,1 +1,1 @@
-export const validateAIResponse = (response: any) => response;
+export const validateAIResponse = (response: any) => response

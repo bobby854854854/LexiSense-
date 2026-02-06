@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { X, Loader2, UserPlus, Mail, Copy, Check } from 'lucide-react'
 import { api } from '@/lib/api'
@@ -34,7 +33,9 @@ export default function InviteMemberDialog({
       toast.success('Invitation sent successfully')
       onInviteSuccess()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to send invitation')
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to send invitation'
+      )
     } finally {
       setIsLoading(false)
     }
@@ -60,7 +61,10 @@ export default function InviteMemberDialog({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={handleClose} />
+        <div
+          className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
+          onClick={handleClose}
+        />
 
         <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
           <div className="bg-white px-6 pt-6 pb-4">
@@ -80,7 +84,10 @@ export default function InviteMemberDialog({
             {!inviteUrl ? (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Email Address
                   </label>
                   <div className="relative">
@@ -98,7 +105,10 @@ export default function InviteMemberDialog({
                 </div>
 
                 <div>
-                  <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="role"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Role
                   </label>
                   <select
@@ -107,16 +117,20 @@ export default function InviteMemberDialog({
                     onChange={(e) => setRole(e.target.value as UserRole)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   >
-                    <option value="member">Member - Can upload and view contracts</option>
+                    <option value="member">
+                      Member - Can upload and view contracts
+                    </option>
                     <option value="viewer">Viewer - Read-only access</option>
-                    <option value="admin">Admin - Full access including team management</option>
+                    <option value="admin">
+                      Admin - Full access including team management
+                    </option>
                   </select>
                 </div>
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <p className="text-sm text-blue-800">
-                    The invited user will receive an email with a link to join your organization.
-                    The invitation expires in 7 days.
+                    The invited user will receive an email with a link to join
+                    your organization. The invitation expires in 7 days.
                   </p>
                 </div>
 
@@ -219,7 +233,10 @@ interface TeamMemberListProps {
   onMemberUpdated: () => void
 }
 
-export default function TeamMemberList({ members, onMemberUpdated }: TeamMemberListProps) {
+export default function TeamMemberList({
+  members,
+  onMemberUpdated,
+}: TeamMemberListProps) {
   const { user } = useAuth()
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [isUpdating, setIsUpdating] = useState<string | null>(null)
@@ -232,14 +249,18 @@ export default function TeamMemberList({ members, onMemberUpdated }: TeamMemberL
       onMemberUpdated()
       setOpenMenuId(null)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to update role')
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to update role'
+      )
     } finally {
       setIsUpdating(null)
     }
   }
 
   const handleRemoveMember = async (memberId: string, email: string) => {
-    if (!window.confirm(`Are you sure you want to remove ${email} from the team?`)) {
+    if (
+      !window.confirm(`Are you sure you want to remove ${email} from the team?`)
+    ) {
       return
     }
 
@@ -249,7 +270,9 @@ export default function TeamMemberList({ members, onMemberUpdated }: TeamMemberL
       toast.success('Member removed successfully')
       onMemberUpdated()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to remove member')
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to remove member'
+      )
     } finally {
       setIsUpdating(null)
     }
@@ -268,7 +291,10 @@ export default function TeamMemberList({ members, onMemberUpdated }: TeamMemberL
       </div>
       <div className="divide-y divide-gray-200">
         {members.map((member) => (
-          <div key={member.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+          <div
+            key={member.id}
+            className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+          >
             <div className="flex items-center flex-1">
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <span className="text-sm font-medium text-primary">
@@ -277,7 +303,9 @@ export default function TeamMemberList({ members, onMemberUpdated }: TeamMemberL
               </div>
               <div className="ml-4 flex-1">
                 <div className="flex items-center space-x-2">
-                  <p className="text-sm font-medium text-gray-900">{member.email}</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {member.email}
+                  </p>
                   {isCurrentUser(member.id) && (
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       You
@@ -291,7 +319,9 @@ export default function TeamMemberList({ members, onMemberUpdated }: TeamMemberL
             </div>
 
             <div className="flex items-center space-x-4">
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(member.role)}`}>
+              <span
+                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(member.role)}`}
+              >
                 {member.role === 'admin' && <Shield className="w-3 h-3 mr-1" />}
                 {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
               </span>
@@ -299,7 +329,9 @@ export default function TeamMemberList({ members, onMemberUpdated }: TeamMemberL
               {canManage && !isCurrentUser(member.id) && (
                 <div className="relative">
                   <button
-                    onClick={() => setOpenMenuId(openMenuId === member.id ? null : member.id)}
+                    onClick={() =>
+                      setOpenMenuId(openMenuId === member.id ? null : member.id)
+                    }
                     disabled={isUpdating === member.id}
                     className="p-1 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
                   >
@@ -317,19 +349,26 @@ export default function TeamMemberList({ members, onMemberUpdated }: TeamMemberL
                           <div className="px-4 py-2 text-xs font-medium text-gray-500 uppercase">
                             Change Role
                           </div>
-                          {(['admin', 'member', 'viewer'] as UserRole[]).map((roleOption) => (
-                            <button
-                              key={roleOption}
-                              onClick={() => handleRoleChange(member.id, roleOption)}
-                              disabled={member.role === roleOption}
-                              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                              {roleOption.charAt(0).toUpperCase() + roleOption.slice(1)}
-                            </button>
-                          ))}
+                          {(['admin', 'member', 'viewer'] as UserRole[]).map(
+                            (roleOption) => (
+                              <button
+                                key={roleOption}
+                                onClick={() =>
+                                  handleRoleChange(member.id, roleOption)
+                                }
+                                disabled={member.role === roleOption}
+                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              >
+                                {roleOption.charAt(0).toUpperCase() +
+                                  roleOption.slice(1)}
+                              </button>
+                            )
+                          )}
                           <div className="border-t border-gray-200 my-1" />
                           <button
-                            onClick={() => handleRemoveMember(member.id, member.email)}
+                            onClick={() =>
+                              handleRemoveMember(member.id, member.email)
+                            }
                             className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors flex items-center"
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
@@ -362,7 +401,10 @@ interface InvitationsListProps {
   onInvitationCancelled: () => void
 }
 
-export default function InvitationsList({ invitations, onInvitationCancelled }: InvitationsListProps) {
+export default function InvitationsList({
+  invitations,
+  onInvitationCancelled,
+}: InvitationsListProps) {
   const [cancelling, setCancelling] = useState<string | null>(null)
 
   const handleCancel = async (id: string) => {
@@ -392,22 +434,31 @@ export default function InvitationsList({ invitations, onInvitationCancelled }: 
       </div>
       <div className="divide-y divide-gray-200">
         {invitations.map((invitation) => (
-          <div key={invitation.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+          <div
+            key={invitation.id}
+            className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+          >
             <div className="flex items-center flex-1">
               <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
                 <Clock className="w-5 h-5 text-yellow-600" />
               </div>
               <div className="ml-4 flex-1">
-                <p className="text-sm font-medium text-gray-900">{invitation.email}</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {invitation.email}
+                </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  Invited by {invitation.creator.email} • Expires {formatDateTime(invitation.expiresAt)}
+                  Invited by {invitation.creator.email} • Expires{' '}
+                  {formatDateTime(invitation.expiresAt)}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center space-x-4">
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(invitation.role)}`}>
-                {invitation.role.charAt(0).toUpperCase() + invitation.role.slice(1)}
+              <span
+                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(invitation.role)}`}
+              >
+                {invitation.role.charAt(0).toUpperCase() +
+                  invitation.role.slice(1)}
               </span>
 
               <button

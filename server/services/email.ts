@@ -1,15 +1,15 @@
-import nodemailer from 'nodemailer';
-import { logger } from '../utils/logger.js';
+import nodemailer from 'nodemailer'
+import { logger } from '../utils/logger.js'
 
 interface EmailOptions {
-  to: string;
-  subject: string;
-  html: string;
-  text?: string;
+  to: string
+  subject: string
+  html: string
+  text?: string
 }
 
 class EmailService {
-  private transporter: nodemailer.Transporter;
+  private transporter: nodemailer.Transporter
 
   constructor() {
     this.transporter = nodemailer.createTransporter({
@@ -20,7 +20,7 @@ class EmailService {
         user: process.env.SMTP_USER || process.env.EMAIL_USER,
         pass: process.env.SMTP_PASS || process.env.EMAIL_PASS,
       },
-    });
+    })
   }
 
   private async sendEmail(options: EmailOptions): Promise<void> {
@@ -31,15 +31,15 @@ class EmailService {
         subject: options.subject,
         html: options.html,
         text: options.text,
-      });
-      
+      })
+
       logger.info('Email sent successfully', {
         to: options.to,
-        subject: options.subject
-      });
+        subject: options.subject,
+      })
     } catch (error) {
-      logger.error('Failed to send email:', error);
-      throw error;
+      logger.error('Failed to send email:', error)
+      throw error
     }
   }
 
@@ -50,8 +50,8 @@ class EmailService {
     organizationName: string,
     inviteToken: string
   ): Promise<void> {
-    const inviteUrl = `${process.env.APP_URL}/accept-invite?token=${inviteToken}`;
-    
+    const inviteUrl = `${process.env.APP_URL}/accept-invite?token=${inviteToken}`
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -99,7 +99,7 @@ class EmailService {
           </div>
         </body>
       </html>
-    `;
+    `
 
     const text = `
       You're invited to join ${organizationName} on LexiSense!
@@ -111,20 +111,24 @@ class EmailService {
       This invitation will expire in 7 days.
       
       © 2024 LexiSense Inc.
-    `;
+    `
 
     await this.sendEmail({
       to: email,
       subject: `You're invited to join ${organizationName} on LexiSense`,
       html,
       text,
-    });
+    })
   }
 
   // Welcome email template
-  async sendWelcome(email: string, name: string, organizationName: string): Promise<void> {
-    const dashboardUrl = `${process.env.APP_URL}/dashboard`;
-    
+  async sendWelcome(
+    email: string,
+    name: string,
+    organizationName: string
+  ): Promise<void> {
+    const dashboardUrl = `${process.env.APP_URL}/dashboard`
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -186,7 +190,7 @@ class EmailService {
           </div>
         </body>
       </html>
-    `;
+    `
 
     const text = `
       Welcome to LexiSense, ${name}!
@@ -203,15 +207,15 @@ class EmailService {
       Need help? Reply to this email or check our documentation.
       
       © 2024 LexiSense Inc.
-    `;
+    `
 
     await this.sendEmail({
       to: email,
       subject: 'Welcome to LexiSense! 🚀',
       html,
       text,
-    });
+    })
   }
 }
 
-export const emailService = new EmailService();
+export const emailService = new EmailService()

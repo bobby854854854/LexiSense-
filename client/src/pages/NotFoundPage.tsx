@@ -1,1 +1,1 @@
-export const NotFoundPage = () => <div>Not Found</div>;
+export const NotFoundPage = () => <div>Not Found</div>

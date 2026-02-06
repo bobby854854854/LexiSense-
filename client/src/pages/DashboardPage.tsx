@@ -136,7 +136,9 @@ export function DashboardPage() {
                       {contract.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{formatDate(contract.createdAt.toString())}</TableCell>
+                  <TableCell>
+                    {formatDate(contract.createdAt.toString())}
+                  </TableCell>
                   <TableCell className="text-right">
                     <Button asChild variant="outline" size="sm">
                       <Link href={`/contracts/${contract.id}`}>
@@ -160,7 +162,7 @@ export function DashboardPage() {
         <div
           className={cn(
             'flex items-center gap-2',
-            contracts.length === 0 && 'invisible',
+            contracts.length === 0 && 'invisible'
           )}
         >
           <Button onClick={() => setUploadModalOpen(true)}>

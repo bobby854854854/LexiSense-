@@ -11,7 +11,14 @@ import {
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Search, Upload, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+  Search,
+  Upload,
+  Filter,
+  X,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
 import { getContracts } from '@/api'
 import type { Contract as UIContract } from '@/components/contract-table'
 import { useLocation } from 'wouter'
@@ -35,12 +42,12 @@ export default function Contracts() {
 
   useEffect(() => {
     getContracts()
-      .then(data => {
+      .then((data) => {
         setContracts(data)
         setIsLoading(false)
       })
-      .catch(error => {
-        console.error("Failed to fetch contracts:", error)
+      .catch((error) => {
+        console.error('Failed to fetch contracts:', error)
         setError(error)
         setIsLoading(false)
       })
@@ -65,7 +72,9 @@ export default function Contracts() {
   }
 
   const contractTypes = useMemo(() => {
-    const types = new Set(contracts.map((c) => c.contractType).filter(Boolean) as string[])
+    const types = new Set(
+      contracts.map((c) => c.contractType).filter(Boolean) as string[]
+    )
     return Array.from(types)
   }, [contracts])
 
@@ -379,52 +388,56 @@ export default function Contracts() {
           {/* Pagination */}
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
-              Showing {startIndex + 1} to {Math.min(endIndex, filteredContracts.length)} of {filteredContracts.length} contracts
+              Showing {startIndex + 1} to{' '}
+              {Math.min(endIndex, filteredContracts.length)} of{' '}
+              {filteredContracts.length} contracts
             </div>
-            
+
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
                 data-testid="button-prev"
               >
                 <ChevronLeft className="h-4 w-4 mr-1" />
                 Previous
               </Button>
-              
+
               <div className="flex items-center space-x-1">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum;
+                  let pageNum
                   if (totalPages <= 5) {
-                    pageNum = i + 1;
+                    pageNum = i + 1
                   } else if (currentPage <= 3) {
-                    pageNum = i + 1;
+                    pageNum = i + 1
                   } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
+                    pageNum = totalPages - 4 + i
                   } else {
-                    pageNum = currentPage - 2 + i;
+                    pageNum = currentPage - 2 + i
                   }
-                  
+
                   return (
                     <Button
                       key={pageNum}
-                      variant={currentPage === pageNum ? "default" : "outline"}
+                      variant={currentPage === pageNum ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setCurrentPage(pageNum)}
                       className="w-8 h-8 p-0"
                     >
                       {pageNum}
                     </Button>
-                  );
+                  )
                 })}
               </div>
-              
+
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                }
                 disabled={currentPage === totalPages}
                 data-testid="button-next"
               >

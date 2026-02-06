@@ -1,4 +1,3 @@
-
 import { FileText, Calendar, User, AlertCircle } from 'lucide-react'
 import { Link } from 'wouter'
 import type { ContractWithUploader } from '@shared/types'

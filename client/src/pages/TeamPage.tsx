@@ -1,29 +1,29 @@
-import { useState, useEffect } from 'react';
-import { Users, Mail, Plus, Trash2, UserCheck, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
+import { useState, useEffect } from 'react'
+import { Users, Mail, Plus, Trash2, UserCheck, Clock } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { toast } from 'sonner'
 
 interface TeamMember {
-  id: string;
-  email: string;
-  name?: string;
-  role: string;
-  status: 'active' | 'pending';
-  joinedAt: string;
+  id: string
+  email: string
+  name?: string
+  role: string
+  status: 'active' | 'pending'
+  joinedAt: string
 }
 
 export default function TeamPage() {
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [inviting, setInviting] = useState(false);
+  const [members, setMembers] = useState<TeamMember[]>([])
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [inviting, setInviting] = useState(false)
 
   useEffect(() => {
-    fetchTeamMembers();
-  }, []);
+    fetchTeamMembers()
+  }, [])
 
   const fetchTeamMembers = async () => {
     try {
@@ -35,7 +35,7 @@ export default function TeamPage() {
           name: 'Admin User',
           role: 'admin',
           status: 'active',
-          joinedAt: '2024-01-15T10:00:00Z'
+          joinedAt: '2024-01-15T10:00:00Z',
         },
         {
           id: '2',
@@ -43,77 +43,85 @@ export default function TeamPage() {
           name: 'Team Member',
           role: 'member',
           status: 'active',
-          joinedAt: '2024-01-20T14:30:00Z'
+          joinedAt: '2024-01-20T14:30:00Z',
         },
         {
           id: '3',
           email: 'pending@company.com',
           role: 'member',
           status: 'pending',
-          joinedAt: '2024-02-01T09:15:00Z'
-        }
-      ]);
+          joinedAt: '2024-02-01T09:15:00Z',
+        },
+      ])
     } catch (error) {
-      toast.error('Failed to load team members');
+      toast.error('Failed to load team members')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleInvite = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inviteEmail.trim()) return;
+    e.preventDefault()
+    if (!inviteEmail.trim()) return
 
     try {
-      setInviting(true);
+      setInviting(true)
       // Replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast.success(`Invitation sent to ${inviteEmail}`);
-      setInviteEmail('');
-      fetchTeamMembers();
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      toast.success(`Invitation sent to ${inviteEmail}`)
+      setInviteEmail('')
+      fetchTeamMembers()
     } catch (error) {
-      toast.error('Failed to send invitation');
+      toast.error('Failed to send invitation')
     } finally {
-      setInviting(false);
+      setInviting(false)
     }
-  };
+  }
 
   const handleRemoveMember = async (memberId: string) => {
-    if (!confirm('Are you sure you want to remove this team member?')) return;
+    if (!confirm('Are you sure you want to remove this team member?')) return
 
     try {
       // Replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setMembers(prev => prev.filter(m => m.id !== memberId));
-      toast.success('Team member removed');
+      await new Promise((resolve) => setTimeout(resolve, 500))
+
+      setMembers((prev) => prev.filter((m) => m.id !== memberId))
+      toast.success('Team member removed')
     } catch (error) {
-      toast.error('Failed to remove team member');
+      toast.error('Failed to remove team member')
     }
-  };
+  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return <Badge variant="default" className="bg-green-100 text-green-800">Active</Badge>;
+        return (
+          <Badge variant="default" className="bg-green-100 text-green-800">
+            Active
+          </Badge>
+        )
       case 'pending':
-        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+        return (
+          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+            Pending
+          </Badge>
+        )
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline">{status}</Badge>
     }
-  };
+  }
 
   const getRoleDisplay = (role: string) => {
-    return role.charAt(0).toUpperCase() + role.slice(1);
-  };
+    return role.charAt(0).toUpperCase() + role.slice(1)
+  }
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
-    );
+    )
   }
 
   return (
@@ -121,7 +129,9 @@ export default function TeamPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Team Management</h1>
-          <p className="text-gray-600 mt-2">Manage your team members and invitations</p>
+          <p className="text-gray-600 mt-2">
+            Manage your team members and invitations
+          </p>
         </div>
       </div>
 
@@ -214,5 +224,5 @@ export default function TeamPage() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

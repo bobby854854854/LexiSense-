@@ -1,4 +1,3 @@
-
 // User Roles
 export type UserRole = 'admin' | 'member' | 'viewer'
 
@@ -23,9 +22,9 @@ export interface AIAnalysisResult {
   summary: string
   parties: Array<{ name: string; role: string }>
   dates: Array<{ name: string; date: string }>
-  risks: Array<{ 
+  risks: Array<{
     level: 'high' | 'medium' | 'low'
-    description: string 
+    description: string
   }>
 }
 

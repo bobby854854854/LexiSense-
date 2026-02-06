@@ -24,7 +24,7 @@ const BUCKET_NAME = 'lexisense-contracts'
  */
 async function extractTextFromFile(
   fileBuffer: Buffer,
-  mimeType: string,
+  mimeType: string
 ): Promise<string> {
   if (mimeType === 'application/pdf') {
     const data = await pdf(fileBuffer)
@@ -47,7 +47,7 @@ export async function uploadFileToStorage(
   fileBuffer: Buffer,
   originalName: string,
   mimeType: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<{ storageKey: string; textContent: string }> {
   console.log('[Storage] Starting file upload and text extraction...')
 
@@ -65,16 +65,14 @@ export async function uploadFileToStorage(
   try {
     // In a real app, this would upload to S3. Here, we're just logging.
     // await s3Client.send(command);
-    console.log(
-      `[Storage] Mock S3 Upload Complete. Storage Key: ${storageKey}`,
-    )
+    console.log(`[Storage] Mock S3 Upload Complete. Storage Key: ${storageKey}`)
   } catch (err) {
     console.error('[Storage] Mock S3 Upload Failed:', err)
     throw new Error('Failed to upload file to storage.')
   }
 
   console.log(
-    `[Storage] Text extracted successfully. Character count: ${textContent.length}`,
+    `[Storage] Text extracted successfully. Character count: ${textContent.length}`
   )
   return { storageKey, textContent }
 }

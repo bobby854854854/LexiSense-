@@ -1,4 +1,3 @@
-
 import { Router } from 'express'
 import multer from 'multer'
 import { body, param, validationResult } from 'express-validator'
@@ -39,7 +38,7 @@ const isAuthenticated = (req: any, res: any, next: any) => {
 router.get('/', isAuthenticated, async (req, res, next) => {
   try {
     const user = req.user as any
-    
+
     const userContracts = await db.query.contracts.findMany({
       where: eq(contracts.organizationId, user.organizationId),
       orderBy: [desc(contracts.createdAt)],
@@ -61,41 +60,46 @@ router.get('/', isAuthenticated, async (req, res, next) => {
 })
 
 // GET /api/contracts/:id - Get single contract by ID
-router.get('/:id', isAuthenticated, param('id').isUUID(), async (req, res, next) => {
-  const errors = validationResult(req)
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() })
-  }
-
-  try {
-    const user = req.user as any
-    const { id } = req.params
-
-    const contract = await db.query.contracts.findFirst({
-      where: and(
-        eq(contracts.id, id),
-        eq(contracts.organizationId, user.organizationId)
-      ),
-      with: {
-        uploader: {
-          columns: {
-            id: true,
-            email: true,
-          },
-        },
-      },
-    })
-
-    if (!contract) {
-      return res.status(404).json({ message: 'Contract not found' })
+router.get(
+  '/:id',
+  isAuthenticated,
+  param('id').isUUID(),
+  async (req, res, next) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() })
     }
 
-    res.json(contract)
-  } catch (error) {
-    console.error('Error fetching contract:', error)
-    next(error)
+    try {
+      const user = req.user as any
+      const { id } = req.params
+
+      const contract = await db.query.contracts.findFirst({
+        where: and(
+          eq(contracts.id, id),
+          eq(contracts.organizationId, user.organizationId)
+        ),
+        with: {
+          uploader: {
+            columns: {
+              id: true,
+              email: true,
+            },
+          },
+        },
+      })
+
+      if (!contract) {
+        return res.status(404).json({ message: 'Contract not found' })
+      }
+
+      res.json(contract)
+    } catch (error) {
+      console.error('Error fetching contract:', error)
+      next(error)
+    }
   }
-})
+)
 
 // POST /api/contracts - Upload and analyze a new contract
 router.post(
@@ -112,11 +116,15 @@ router.post(
       }
 
       // Extract text from file
-      const extractedText = await extractTextFromFile(file.buffer, file.mimetype)
+      const extractedText = await extractTextFromFile(
+        file.buffer,
+        file.mimetype
+      )
 
       if (!extractedText || extractedText.trim().length === 0) {
-        return res.status(400).json({ 
-          message: 'Could not extract text from file. The file may be empty or corrupted.' 
+        return res.status(400).json({
+          message:
+            'Could not extract text from file. The file may be empty or corrupted.',
         })
       }
 
@@ -189,8 +197,8 @@ router.post(
       }
 
       if (!contract.extractedText) {
-        return res.status(400).json({ 
-          message: 'Contract text not available for analysis' 
+        return res.status(400).json({
+          message: 'Contract text not available for analysis',
         })
       }
 
@@ -233,8 +241,8 @@ router.delete(
       }
 
       if (user.role !== 'admin' && contract.uploadedBy !== user.id) {
-        return res.status(403).json({ 
-          message: 'Only admins or the uploader can delete this contract' 
+        return res.status(403).json({
+          message: 'Only admins or the uploader can delete this contract',
         })
       }
 

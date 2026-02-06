@@ -12,8 +12,8 @@ function HomePage() {
         <div className="bg-white p-6 rounded-lg shadow-lg">
           <h2 className="text-2xl font-semibold mb-4">🚀 Beta Coming Soon</h2>
           <p className="text-gray-600">
-            Enterprise-grade contract management with AI-powered analysis, 
-            team collaboration, and advanced security features.
+            Enterprise-grade contract management with AI-powered analysis, team
+            collaboration, and advanced security features.
           </p>
         </div>
       </div>

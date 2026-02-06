@@ -27,7 +27,7 @@ export const analysisResultsSchema = z.object({
     z.object({
       name: z.string(),
       role: z.string(),
-    }),
+    })
   ),
   keyDates: z.object({
     effectiveDate: z.string(),

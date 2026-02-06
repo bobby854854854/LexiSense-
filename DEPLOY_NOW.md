@@ -13,6 +13,7 @@ npx vercel --prod --yes
 ```
 
 **Or use Vercel Dashboard:**
+
 1. Go to https://vercel.com/dashboard
 2. Import from GitHub: `https://github.com/bobby854854854/LexiSense.git`
 3. Set build command: `npm run build:client`
@@ -21,11 +22,13 @@ npx vercel --prod --yes
 ### 2. AWS S3 Bucket Setup
 
 **Create S3 Bucket:**
+
 ```bash
 aws s3 mb s3://lexisense-contracts-prod
 ```
 
 **CORS Configuration:**
+
 ```json
 [
   {
@@ -38,6 +41,7 @@ aws s3 mb s3://lexisense-contracts-prod
 ```
 
 **IAM Policy:**
+
 ```json
 {
   "Version": "2012-10-17",
@@ -66,6 +70,7 @@ aws s3 mb s3://lexisense-contracts-prod
 5. Set start command: `npm start`
 
 **Environment Variables:**
+
 ```bash
 NODE_ENV=production
 PORT=10000
@@ -99,6 +104,7 @@ npm run db:migrate
 ## 🎉 GO LIVE!
 
 Your LexiSense beta is ready for real customers with:
+
 - ✅ Enterprise security (rate limiting, CSRF, XSS protection)
 - ✅ AWS S3 file storage with streaming
 - ✅ Redis distributed rate limiting
@@ -109,6 +115,7 @@ Your LexiSense beta is ready for real customers with:
 - ✅ Pagination and search
 
 **Next Steps:**
+
 1. Set up monitoring alerts
 2. Configure backup strategy
 3. Add custom domain

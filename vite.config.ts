@@ -1,9 +1,9 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import path from 'path';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
 
 export default defineConfig({
-  root: 'client',  // Point to client/ as build root (where index.html lives)
+  root: 'client', // Point to client/ as build root (where index.html lives)
   plugins: [react()],
   resolve: {
     alias: {
@@ -12,7 +12,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: '../dist/client',  // Output relative to project root
+    outDir: '../dist/client', // Output relative to project root
   },
   server: {
     port: 3000,
@@ -20,4 +20,4 @@ export default defineConfig({
       '/api': { target: 'http://localhost:5000', changeOrigin: true },
     },
   },
-});
+})

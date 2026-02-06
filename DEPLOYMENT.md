@@ -3,26 +3,31 @@
 ## Frontend Deployment (Vercel)
 
 1. **Build the frontend:**
+
 ```bash
 npm run build:client
 ```
 
 2. **Deploy to Vercel:**
+
 ```bash
 npx vercel --prod
 ```
 
 3. **Environment Variables (Vercel Dashboard):**
+
 - `VITE_API_URL` - Your backend API URL
 
 ## Backend Deployment (Render/Railway)
 
 1. **Build the backend:**
+
 ```bash
 npm run build:server
 ```
 
 2. **Environment Variables:**
+
 ```bash
 # Database
 DATABASE_URL=postgresql://user:pass@host/db
@@ -61,6 +66,7 @@ APP_URL=https://your-frontend-url.vercel.app
    - Encryption: AES-256
 
 2. **CORS Configuration:**
+
 ```json
 [
   {
@@ -73,17 +79,14 @@ APP_URL=https://your-frontend-url.vercel.app
 ```
 
 3. **IAM Policy for S3 access:**
+
 ```json
 {
   "Version": "2012-10-17",
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject",
-        "s3:DeleteObject"
-      ],
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
       "Resource": "arn:aws:s3:::lexisense-contracts/*"
     }
   ]
@@ -105,6 +108,7 @@ npm run db:migrate
 ## Health Check
 
 After deployment, verify:
+
 - `GET /api/health` returns performance metrics
 - Frontend loads and routes work
 - File upload to S3 works
@@ -120,6 +124,7 @@ After deployment, verify:
 ## Background Jobs (Optional)
 
 Set up cron job for cleanup:
+
 ```bash
 # Run daily at 2 AM
 0 2 * * * cd /app && npm run cleanup:invitations

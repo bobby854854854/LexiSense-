@@ -9,8 +9,9 @@ if (!process.env.DATABASE_URL) {
   }
 }
 
-const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL || 'postgresql://localhost/lexisense' 
+const pool = new Pool({
+  connectionString:
+    process.env.DATABASE_URL || 'postgresql://localhost/lexisense',
 })
 
 export const db = drizzle({

@@ -26,7 +26,13 @@ export default function AIDrafting() {
   const [generatedText, setGeneratedText] = useState('')
 
   const draftMutation = useMutation({
-    mutationFn: async (data: { contractType: string; party1: string; party2: string; value: string; terms: string }) => {
+    mutationFn: async (data: {
+      contractType: string
+      party1: string
+      party2: string
+      value: string
+      terms: string
+    }) => {
       const response = await fetch('/api/contracts/draft', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

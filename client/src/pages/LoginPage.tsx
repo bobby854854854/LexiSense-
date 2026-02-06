@@ -39,7 +39,10 @@ export default function LoginPage() {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
-            <Link href="/register" className="font-medium text-primary hover:underline">
+            <Link
+              href="/register"
+              className="font-medium text-primary hover:underline"
+            >
               create a new organization
             </Link>
           </p>

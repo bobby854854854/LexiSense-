@@ -1,1 +1,1 @@
-export const Chart = () => <div>Chart</div>;
+export const Chart = () => <div>Chart</div>
