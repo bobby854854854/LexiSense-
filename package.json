@@ -5,10 +5,10 @@
   "license": "MIT",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx watch server/index.ts",
-    "build": "vite build --outDir dist/client && tsc -p tsconfig.server.json",
+    "build": "npm run build:client",
     "build:client": "vite build --outDir dist/client",
     "build:server": "tsc -p tsconfig.server.json",
-    "start": "cross-env NODE_ENV=production node dist/server/index.js",
+    "start": "cross-env NODE_ENV=production tsx server/index.ts",
     "check": "tsc --noEmit",
     "test": "vitest",
     "lint": "eslint . --ext .ts,.tsx",
