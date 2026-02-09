@@ -1,3 +1,4 @@
+
 import {
   S3Client,
   PutObjectCommand,
@@ -197,4 +198,49 @@ export async function extractTextFromFile(
   }
   // For other types, return placeholder
   return 'Text extraction not implemented for this file type'
+
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import crypto from 'crypto';
+import { magicNumbers } from '../utils/magicNumbers';
+
+const s3 = new S3Client({
+  region: process.env.AWS_REGION || 'us-east-1',
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
+
+const BUCKET = process.env.S3_BUCKET_NAME!;
+
+export async function uploadFileToStorage(buffer: Buffer, originalFilename: string, organizationId: string) {
+  const mimeType = magicNumbers(buffer) || 'application/octet-stream';
+  if (!['application/pdf', 'text/plain'].includes(mimeType)) {
+    throw new Error('Unsupported file type');
+  }
+
+  const ext = mimeType === 'application/pdf' ? 'pdf' : 'txt';
+  const storageKey = `contracts/\( {organizationId}/ \){crypto.randomUUID()}.${ext}`;
+
+  await s3.send(new PutObjectCommand({
+    Bucket: BUCKET,
+    Key: storageKey,
+    Body: buffer,
+    ContentType: mimeType,
+    Metadata: { organizationId, originalFilename },
+    ServerSideEncryption: 'AES256',
+  }));
+
+  return { storageKey, mimeType, sizeBytes: buffer.length };
+}
+
+export async function getSignedDownloadUrl(storageKey: string) {
+  const command = new GetObjectCommand({ Bucket: BUCKET, Key: storageKey });
+  return getSignedUrl(s3, command, { expiresIn: 3600 });
+}
+
+export async function deleteFileFromStorage(storageKey: string) {
+  await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: storageKey }));
+        93bd3b4 (Add real AWS S3 storage + Winston logger)
 }

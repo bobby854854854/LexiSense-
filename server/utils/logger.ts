@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import winston from 'winston'
 import path from 'path'
 import fs from 'fs'
@@ -9,16 +10,20 @@ if (!fs.existsSync(logDir)) {
 }
 
 // Custom format for structured logging
+=======
+import winston from 'winston';
+import DailyRotateFile from 'winston-daily-rotate-file';
+
+>>>>>>> 93bd3b4 (Add real AWS S3 storage + Winston logger)
 const logFormat = winston.format.combine(
   winston.format.timestamp(),
-  winston.format.errors({ stack: true }),
   winston.format.json()
-)
+);
 
-// Create logger instance
 export const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: logFormat,
+<<<<<<< HEAD
   defaultMeta: { service: 'lexisense' },
   transports: [
     // Error logs
@@ -69,3 +74,19 @@ export const auditLog = (action: string, userId?: string, details?: any) => {
 }
 
 export default logger
+=======
+  transports: [
+    new winston.transports.Console(),
+    new DailyRotateFile({
+      filename: 'logs/app-%DATE%.log',
+      datePattern: 'YYYY-MM-DD',
+      maxSize: '10m',
+      maxFiles: '14d',
+    }),
+  ],
+});
+
+export const auditLog = (event: string, metadata: Record<string, any>) => {
+  logger.warn('AUDIT', { event, ...metadata });
+};
+>>>>>>> 93bd3b4 (Add real AWS S3 storage + Winston logger)
