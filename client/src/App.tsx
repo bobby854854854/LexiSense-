@@ -1,38 +1,62 @@
-import { Route, Router } from 'wouter'
-import { Toaster } from 'sonner'
+// client/src/App.tsx
+import { Route, Router, Switch, Redirect } from 'wouter';
+import { Toaster } from 'sonner';
+import { useAuth } from './hooks/useAuth';
+
+import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/DashboardPage';
+import ContractsPage from './pages/ContractsPage';
+import ContractDetailPage from './pages/ContractDetailPage';
+import TeamPage from './pages/TeamPage';
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  if (!user) return <Redirect to="/login" />;
+  return <>{children}</>;
+}
 
 function App() {
   return (
     <Router>
-      <Toaster />
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
-          <h1 className="text-4xl font-bold text-indigo-600 mb-2">LexiSense</h1>
-          <p className="text-gray-600 mb-8">Contract Intelligence Platform</p>
+      <Toaster position="top-right" richColors />
 
-          <div className="bg-green-100 text-green-700 rounded-xl p-4 mb-6">
-            ✅ Frontend is live and connected to backend!
-          </div>
+      <Switch>
+        {/* Public routes */}
+        <Route path="/login" component={LoginPage} />
 
-          <button
-            onClick={() => alert('Login flow coming next!')}
-            className="w-full bg-indigo-600 text-white font-medium py-3 rounded-xl hover:bg-indigo-700 transition"
-          >
-            Try Login (demo)
-          </button>
+        {/* Protected routes */}
+        <Route path="/">
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        </Route>
 
-          <p className="text-xs text-gray-400 mt-6">
-            Backend: https://lexisense-api.onrender.com
-            <br />
-            Deployed on Vercel • {new Date().toLocaleTimeString()}
-          </p>
-        </div>
-      </div>
+        <Route path="/contracts">
+          <ProtectedRoute>
+            <ContractsPage />
+          </ProtectedRoute>
+        </Route>
 
-      {/* Add real routes later */}
-      <Route path="/login" component={() => <div>Login Page</div>} />
+        <Route path="/contracts/:id">
+          <ProtectedRoute>
+            <ContractDetailPage />
+          </ProtectedRoute>
+        </Route>
+
+        <Route path="/team">
+          <ProtectedRoute>
+            <TeamPage />
+          </ProtectedRoute>
+        </Route>
+
+        {/* Fallback */}
+        <Route>
+          <Redirect to="/" />
+        </Route>
+      </Switch>
     </Router>
-  )
+  );
 }
 
-export default App
+export default App;
