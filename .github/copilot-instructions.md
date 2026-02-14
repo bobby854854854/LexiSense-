@@ -277,8 +277,8 @@ npm run build
 **AI Integration**: `server/ai.ts`
 
 - OpenAI GPT-4 integration for contract analysis
-- Returns structured JSON: `{ summary, parties, keyDates, highLevelRisks }`
-- Temperature: 0.2 for consistency
+- Returns structured JSON: `{ summary, parties, dates, risks }`
+- Temperature: 0.1 for consistency
 
 **Authentication**: `server/auth.ts`
 
