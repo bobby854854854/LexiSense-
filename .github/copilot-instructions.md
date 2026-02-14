@@ -1,227 +1,387 @@
-# LexiSense Copilot Instructions
+# LexiSense - GitHub Copilot Instructions
 
-## Project Overview
+## Repository Overview
 
-**LexiSense** is an AI-powered Contract Lifecycle Management (CLM) platform using React + Express + PostgreSQL. It analyzes contracts using OpenAI GPT-4, stores them in a database, and provides legal insights to users.
+**LexiSense** is an enterprise AI-powered Contract Lifecycle Management (CLM) platform built with React, Express.js, and PostgreSQL. The codebase contains ~11,671 lines of TypeScript/TSX code organized in a monorepo structure with frontend (`client/`), backend (`server/`), and shared code (`shared/`).
 
-## Architecture Quick Reference
+**Tech Stack:**
 
-### Tech Stack
+- **Frontend:** React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui (Radix UI)
+- **Backend:** Node.js + Express.js (ES modules) + TypeScript
+- **Database:** PostgreSQL (Neon Serverless) + Drizzle ORM
+- **Storage:** AWS S3 with streaming uploads
+- **Cache:** Redis (optional, for distributed rate limiting)
+- **AI:** OpenAI GPT-4 (gpt-4o model)
+- **Logging:** Winston with daily log rotation
+- **Testing:** Vitest (no tests currently exist)
+- **Tooling:** ESLint, Prettier, Husky (pre-commit hooks), lint-staged
 
-- **Frontend**: React 18 + TypeScript + Vite
-- **Backend**: Express.js (ES modules) + Node.js
-- **Database**: PostgreSQL + Drizzle ORM
-- **UI**: shadcn/ui (Radix UI components) + Tailwind CSS
-- **AI**: OpenAI GPT-4 (gpt-4o model)
-- **Auth**: Session-based with bcrypt + express-session
+**Node Version:** 20.17+ (CI uses 20.17, local development tested with 24.13.0)  
+**Package Manager:** npm (11.6.2+)
 
-### Code Organization
+## Critical Build Instructions
+
+### Initial Setup & Common Issues
+
+**IMPORTANT:** The package-lock.json may be out of sync. Always run `npm install` first, not `npm ci`:
+
+```bash
+# 1. Install dependencies (REQUIRED first step)
+npm install
+# Wait ~15 seconds for completion
+
+# 2. Copy environment file
+cp .env.example .env
+# Edit .env with required credentials (see Environment Variables section)
+```
+
+**Known Issue:** Running `npm ci` will fail with "lock file out of sync" error. Always use `npm install` instead.
+
+### Environment Variables
+
+Required for development (see `.env.example` for full list):
+
+- `DATABASE_URL` - PostgreSQL connection string
+- `SESSION_SECRET` - Generate with: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+- `OPENAI_API_KEY` - Get from https://platform.openai.com/api-keys
+- `APP_URL` - Default: `http://localhost:5000`
+
+Production also requires: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET_NAME`, `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`, `REDIS_URL` (optional)
+
+Check environment setup:
+
+```bash
+npm run check-env
+# Validates all required variables are set
+```
+
+### Build Commands (In Order)
+
+**Development:**
+
+```bash
+npm run dev
+# Starts both Express server (port 5000) and Vite dev server (port 3000)
+# Vite proxies /api/* requests to Express
+# Wait ~5-10 seconds for both servers to start
+```
+
+**Type Checking:**
+
+```bash
+npm run typecheck
+# Runs TypeScript compiler without emitting files
+# Current status: Has errors due to missing imports and type mismatches
+# Expected to fail until TypeScript issues are resolved
+```
+
+**Linting:**
+
+```bash
+npm run lint
+# Runs ESLint with Prettier integration
+# Auto-fixes most issues via pre-commit hook
+# Current status: Shows formatting issues, mostly Prettier semicolon rules
+```
+
+**Format Check:**
+
+```bash
+npx prettier --check .
+# Checks code formatting without modifying files
+```
+
+**Format Fix:**
+
+```bash
+npm run format
+# Auto-formats all files with Prettier
+```
+
+**Building for Production:**
+
+```bash
+# Build client only (used in CI/CD)
+npm run build:client
+# Outputs to: dist/client/
+# Current status: FAILS due to missing react-router-dom import in main.tsx
+# Known Issue: Build will fail until import dependencies are fixed
+
+# Full production build
+npm run build
+# Runs build:client only (build:server is not in default build)
+```
+
+**Testing:**
+
+```bash
+npm test
+# Runs Vitest test suite
+# Current status: No test files exist, exits with code 1
+# Missing dependency: jsdom (needs to be installed for DOM testing)
+```
+
+**Database Setup:**
+
+```bash
+# Initialize database schema
+npm run db:migrate
+# Runs server/db/migrate.ts which creates tables from schema
+# Requires DATABASE_URL to be set
+
+# Push schema changes
+npm run db:push
+# Uses Drizzle Kit to push schema changes
+
+# Open Drizzle Studio (database GUI)
+npm run db:studio
+```
+
+### Pre-commit Hooks
+
+**Husky is configured** and runs automatically on `git commit`:
+
+- ESLint with auto-fix (`--fix`)
+- Prettier formatting (`--write`)
+- Type checking (NOT run in hooks)
+
+Files affected by hooks:
+
+- `*.{ts,tsx,js,jsx}` → ESLint + Prettier
+- `*.{json,md,yml,yaml}` → Prettier only
+
+**To bypass hooks (emergency only):**
+
+```bash
+git commit --no-verify -m "message"
+```
+
+**Common Hook Failure:** If ESLint finds errors (not warnings), commit will be blocked. Fix the errors or use `--no-verify` cautiously.
+
+## CI/CD Workflows
+
+Location: `.github/workflows/`
+
+**Four workflows are configured:**
+
+1. **ci.yml** - Main CI pipeline (runs on push/PR to main)
+   - Runs: `npm ci`, `npm test`, `npm run typecheck`, `npm run build`
+   - Node version: 20.17
+   - **Current status:** Will fail on npm ci (lock file issue), typecheck, and build
+
+2. **pr-checks.yml** - PR quality checks
+   - Runs: `npm ci`, `npm run typecheck`, `npm run lint`, `npx prettier --check .`, `npm run build`
+   - All steps use `continue-on-error: true` except build
+   - Node version: 20
+
+3. **deploy.yml** - Production deployment to Vercel (on push to main)
+   - Runs: `npm ci`, `npm run build:client`, deploys to Vercel
+   - Requires GitHub secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
+
+4. **ci-cd.yml** - Full CI/CD pipeline (comprehensive checks + deploy)
+   - Combines quality checks and deployment
+   - Deploys to Vercel only on push to main
+
+**To pass CI:**
+
+1. Fix package-lock.json sync issue (or change CI to use `npm install`)
+2. Fix TypeScript errors in typecheck
+3. Fix Vite build error (missing react-router-dom import)
+4. Add tests or skip test step in CI
+
+## Project Layout & Architecture
+
+### Directory Structure
 
 ```
-client/src/         → React app (entry: main.tsx)
-  ├─ pages/        → Page components (contracts, dashboard, login)
-  ├─ components/   → Reusable React components
-  │   └─ ui/       → shadcn/ui components (auto-generated)
-  ├─ contexts/     → React context (AuthContext for auth state)
-  ├─ hooks/        → Custom hooks (use-mobile, use-toast)
-  └─ api.ts        → HTTP client using fetch
-server/            → Express API (entry: index.ts)
-  ├─ api/         → Router modules (contracts.ts, auth.ts)
-  ├─ index.ts     → Express setup, middleware, route registration
-  ├─ db.ts        → Drizzle ORM client & connection pool
-  ├─ db/schema.ts → Table definitions (users, contracts)
-  ├─ ai.ts        → OpenAI contract analysis logic
-  └─ auth.ts      → Authentication middleware
-shared/            → Shared types & schemas
-  └─ types.ts     → TypeScript interfaces used by both client & server
+/
+├── .github/
+│   ├── copilot-instructions.md     ← This file
+│   └── workflows/                   ← GitHub Actions CI/CD
+│       ├── ci.yml, pr-checks.yml, deploy.yml, ci-cd.yml
+├── client/                          ← React frontend (Vite project root)
+│   ├── index.html                   ← Entry HTML
+│   └── src/
+│       ├── main.tsx                 ← React entry point
+│       ├── App.tsx                  ← Router & layout
+│       ├── pages/                   ← Page components
+│       ├── components/              ← React components
+│       │   ├── ui/                  ← shadcn/ui components (auto-generated)
+│       │   ├── features/            ← Feature components
+│       │   └── layout/              ← Layout components
+│       ├── hooks/                   ← Custom React hooks
+│       ├── lib/                     ← Utilities
+│       └── contexts/                ← React contexts (AuthContext)
+├── server/                          ← Express backend
+│   ├── index.ts                     ← Express app entry point & middleware setup
+│   ├── api/                         ← API route handlers
+│   │   ├── contracts.ts             ← Contract CRUD endpoints
+│   │   ├── auth.ts                  ← Auth endpoints (login, register)
+│   │   └── team.ts                  ← Team management
+│   ├── db/
+│   │   ├── schema.ts                ← Exports from shared/schema.ts
+│   │   ├── migrate.ts               ← Database migration script
+│   │   └── index.ts                 ← Database client
+│   ├── services/                    ← Business logic
+│   │   ├── ai.ts                    ← OpenAI integration
+│   │   ├── storage.ts               ← AWS S3 file storage
+│   │   └── email.ts                 ← SMTP email sending
+│   ├── middleware/
+│   │   └── rateLimiter.ts           ← Rate limiting (Redis-backed)
+│   ├── utils/
+│   │   ├── logger.ts                ← Winston logger configuration
+│   │   └── magicNumbers.ts          ← File type validation
+│   ├── jobs/
+│   │   └── cleanup.ts               ← Background job for expired invitations
+│   ├── auth.ts                      ← Authentication middleware
+│   └── db.ts                        ← Drizzle ORM client
+├── shared/                          ← Shared types & schemas
+│   ├── schema.ts                    ← Drizzle table schemas (users, contracts)
+│   └── types.ts                     ← TypeScript types & Zod validation schemas
+├── scripts/
+│   ├── check-env.ts                 ← Environment variable validator
+│   └── setup-db.ts                  ← Database initialization script
+├── .husky/                          ← Git hooks
+│   └── pre-commit                   ← Runs lint-staged
+├── package.json                     ← Dependencies & scripts
+├── tsconfig.json                    ← TypeScript config (client + server)
+├── tsconfig.server.json             ← Server-specific TypeScript config
+├── vite.config.ts                   ← Vite bundler config
+├── eslint.config.js                 ← ESLint v9 flat config
+├── .prettierrc.json                 ← Prettier config
+├── .lintstagedrc.json               ← lint-staged config
+├── tailwind.config.js               ← Tailwind CSS config
+├── components.json                  ← shadcn/ui config
+└── design_guidelines.md             ← UI design system documentation
 ```
 
-## Critical Data Flows
+### Key Files to Understand
 
-### Contract Upload & Analysis
+1. **server/index.ts** - Express app setup, middleware registration, session config
+2. **shared/schema.ts** - Database table definitions (users, contracts tables)
+3. **shared/types.ts** - Shared TypeScript interfaces, Zod schemas
+4. **client/src/App.tsx** - React router setup (wouter), protected routes
+5. **server/api/contracts.ts** - Contract CRUD API with AI analysis
+6. **server/services/ai.ts** - OpenAI GPT-4 contract analysis logic
+7. **server/db.ts** - Drizzle ORM client & connection pool setup
+
+### Data Flow
+
+**Contract Upload & AI Analysis:**
 
 1. User uploads file → `POST /api/contracts/upload`
-2. Server extracts text, saves contract record with `status: "processing"`
-3. `analyzeContract()` calls OpenAI GPT-4 with contract text
-4. AI returns JSON with `summary`, `parties`, `keyDates`, `highLevelRisks`
-5. Results stored in `contracts.aiInsights` (jsonb field)
-6. Update status to `"completed"`
+2. Server validates file, extracts text, creates contract record (status: "processing")
+3. OpenAI analyzes contract text → returns JSON with summary, parties, keyDates, risks
+4. Results saved to `contracts.aiInsights` (JSONB column)
+5. Contract status updated to "completed"
 
-### Authentication
+**Authentication:**
 
-- Session stored in PostgreSQL via `connect-pg-simple`
-- Passwords hashed with bcrypt (10 salt rounds)
-- Protected routes require `isAuthenticated` middleware
-- `AuthContext` reads session from server on app load
+- Session-based auth with express-session + connect-pg-simple
+- Sessions stored in PostgreSQL `user_sessions` table
+- Passwords hashed with bcrypt (10 rounds)
+- Protected routes use `isAuthenticated` middleware
 
-### Type Flow
+### Type Safety & Naming Conventions
 
-- Shared interfaces in [shared/types.ts](shared/types.ts) used by both client & server
-- Database schema in [server/db/schema.ts](server/db/schema.ts) defined with Drizzle
-- API responses must match `Contract` interface
-- Field names: use `camelCase` in TypeScript, database stores `snake_case`
+- **Database columns:** `snake_case` (e.g., `first_name`, `created_at`)
+- **TypeScript/JS:** `camelCase` (e.g., `firstName`, `createdAt`)
+- **Drizzle ORM** automatically maps between conventions
+- **Shared types** in `@shared/types` imported by both client & server
+- **Path aliases:**
+  - `@/*` → `client/src/*`
+  - `@shared/*` → `shared/*`
 
-## Build & Development Workflow
+### shadcn/ui Components
 
-### First-Time Setup
+- Located in `client/src/components/ui/`
+- Auto-generated from shadcn/ui CLI (don't edit manually)
+- Configuration in `components.json`
+- Uses Radix UI primitives + Tailwind CSS
+- Import pattern: `import { Button } from '@/components/ui/button'`
 
-```powershell
-npm install
-npm run env:check          # Verify OPENAI_API_KEY, DATABASE_URL
-npm run db:setup           # Initialize database schema (requires .env)
-npm run dev                # Start server + Vite dev server
-```
+## Common Development Workflows
 
-### Required Environment Variables
+**Making Code Changes:**
 
-```
-OPENAI_API_KEY=sk-...      # OpenAI API key (required for AI features)
-DATABASE_URL=postgresql://... # Neon/Postgres connection string
-NODE_ENV=development       # Set by npm scripts automatically
-SESSION_SECRET=dev-secret  # For session signing (use process.env fallback)
-```
+1. Create feature branch
+2. Make minimal changes
+3. Run `npm run lint` to check for issues
+4. Run `npm run format` to auto-fix formatting
+5. Test changes with `npm run dev`
+6. Commit (pre-commit hook will run ESLint + Prettier automatically)
 
-### Build Process
+**Adding API Endpoints:**
 
-- **Development**: `npm run dev` → tsx runs server, Vite serves client
-- **Production**: `npm run build` → Vite builds client to `dist/client`, esbuild bundles server to `dist/index.js`
-- **Proxy**: Vite proxies `/api/*` requests to `http://localhost:3000` during dev
+1. Define route handler in `server/api/*.ts`
+2. Add authentication check: `import { isAuthenticated } from '../auth'`
+3. Use `req.user.id` to access authenticated user ID
+4. Add types to `shared/types.ts`
+5. Register route in `server/index.ts`
 
-### Running Tests & Linting
+**Database Changes:**
 
-```powershell
-npm run test       # Vitest (no tests added yet)
-npm run lint       # ESLint + TypeScript checks
-npm run format     # Prettier formatting
-npm run typecheck  # TypeScript without emitting
-```
+1. Update schema in `shared/schema.ts`
+2. Run `npm run db:push` to sync schema
+3. Or create migration with `npm run db:generate`
 
-## Key Implementation Patterns
+**Fixing Build Errors:**
 
-### API Client Pattern
+1. Check TypeScript errors: `npm run typecheck`
+2. Check lint errors: `npm run lint`
+3. Check build errors: `npm run build:client`
+4. Most common issues: missing imports, type mismatches, path alias issues
 
-[client/src/api.ts](client/src/api.ts) uses simple fetch with error handling:
+## Known Issues & Workarounds
 
-```typescript
-export async function getContracts(): Promise<Contract[]> {
-  const response = await fetch('/api/contracts')
-  if (!response.ok) throw new Error('Failed to fetch')
-  return response.json()
-}
-```
+1. **npm ci fails with lock file sync error**
+   - **Workaround:** Always use `npm install` instead of `npm ci`
+   - **CI Impact:** CI workflows will fail on npm ci step
 
-- No custom fetch wrappers; plain fetch for simplicity
-- Type responses with shared `Contract` interface
+2. **TypeScript errors in typecheck**
+   - Missing module: `./hooks/useAuth`
+   - Missing module: `@mui/material` (should not be imported)
+   - Type mismatches in various components
+   - **Workaround:** Fix imports before running typecheck
 
-### React Route Structure
+3. **Vite build fails with react-router-dom import error**
+   - Missing dependency in package.json
+   - **Workaround:** App uses `wouter` not `react-router-dom`, remove incorrect import
 
-[client/src/App.tsx](client/src/App.tsx) uses `wouter` for routing:
+4. **Test suite has no tests**
+   - `npm test` exits with code 1
+   - Missing jsdom dependency
+   - **Workaround:** Add tests or skip test step in development
 
-- Protected routes wrap components with `<ProtectedRoute>`
-- Public routes: `/`, `/login`
-- Protected routes: `/dashboard`, `/contracts/:id`
-- `MainLayout` wraps dashboard & contract views
+## Validation Steps
 
-### Database Query Pattern
+Before pushing changes:
 
-[server/api/contracts.ts](server/api/contracts.ts) uses Drizzle query builder:
+1. ✅ Run `npm run lint` → Should pass or show only warnings
+2. ✅ Run `npm run typecheck` → Should pass (currently fails, fix before merging)
+3. ✅ Run `npm run build:client` → Should build successfully (currently fails)
+4. ✅ Run `npm run dev` → Should start without errors
+5. ✅ Test changed functionality manually in browser
+6. ✅ Check git status → Ensure no unintended files are staged
+7. ✅ Commit will auto-run lint-staged hooks
 
-```typescript
-const userContracts = await db.query.contracts.findMany({
-  where: eq(contracts.userId, req.user.id),
-  orderBy: (contracts, { desc }) => [desc(contracts.createdAt)],
-})
-```
+## Additional Resources
 
-- Always filter by `userId` for security
-- Use `findMany` for lists, `findFirst` for single records
+- **README.md** - Quick start guide, architecture overview, deployment info
+- **DEPLOY_NOW.md** - Detailed deployment instructions (Vercel, Render, AWS S3, Redis)
+- **DEPLOYMENT.md** - Backend deployment guide
+- **CI-CD-SETUP.md** - GitHub Actions secrets setup, workflow descriptions
+- **design_guidelines.md** - UI design system (colors, typography, spacing, components)
+- **.env.example** - Complete list of environment variables with descriptions
 
-### AI Analysis Pattern
+## Trust These Instructions
 
-[server/ai.ts](server/ai.ts) enforces JSON response:
+This file was created by thoroughly exploring the codebase, testing all build commands, reviewing documentation, and noting all errors and workarounds. When making changes:
 
-- Uses `response_format: { type: 'json_object' }` for structured output
-- Prompt defines exact JSON schema (summary, parties, keyDates, risks)
-- Parse `response.choices[0].message.content` and validate before storing
-- Temperature set to 0.2 for consistency
+1. **Follow the build order** exactly as documented above
+2. **Use `npm install`** not `npm ci`
+3. **Check known issues** before debugging similar problems
+4. **Run validation steps** before committing
+5. **Only search the codebase** if information here is incomplete or you find it to be incorrect
 
-### Component Pattern
-
-- Functional components with TypeScript props interface
-- shadcn/ui components imported from `@/components/ui/*`
-- Use `useToast()` hook for notifications
-- Use `useAuth()` for auth state in components
-
-## Important Conventions
-
-### Naming
-
-- Database fields: `snake_case` (e.g., `first_name`, `created_at`)
-- TypeScript/JS: `camelCase` (e.g., `firstName`, `createdAt`)
-- Use consistent field names across schema, types, and API responses
-
-### Security
-
-- Rate limiting: 100 requests per 15 minutes per IP (via express-rate-limit)
-- Helmet.js for security headers
-- CSRF protection via csurf (check if implemented in routes)
-- Input sanitization with DOMPurify for client-side
-- All API endpoints require authentication except `/`, `/login`, `/api/auth/*`
-- Multer file uploads limited to 10MB; stored in memory only (no disk)
-
-### Error Handling
-
-- Server: return `{ message: "error description" }` with appropriate HTTP status
-- Client: API functions throw errors; components use error boundaries
-- Avoid generic "An error occurred" messages; be specific
-
-### Type Safety
-
-- No `as any` type casts; use proper interfaces
-- Shared types between client & server via `@shared/*` imports
-- Database schema auto-generates types (check Drizzle docs if needed)
-
-## Files to Know
-
-**Critical for understanding architecture:**
-
-- [server/index.ts](server/index.ts) - Express app setup & middleware
-- [server/db/schema.ts](server/db/schema.ts) - Database table definitions
-- [client/src/App.tsx](client/src/App.tsx) - Router & page structure
-- [server/api/contracts.ts](server/api/contracts.ts) - Contract API endpoints
-- [server/ai.ts](server/ai.ts) - AI analysis implementation
-- [shared/types.ts](shared/types.ts) - Shared TypeScript interfaces
-
-**Design & UI:**
-
-- [design_guidelines.md](design_guidelines.md) - Color palette, typography, spacing
-- [components.json](components.json) - shadcn/ui configuration
-
-## Common Tasks
-
-**Add a new API endpoint:**
-
-1. Create handler in `server/api/*.ts` or extend existing
-2. Use `isAuthenticated` middleware + userId from `req.user.id`
-3. Add matching fetch function in `client/src/api.ts`
-4. Add route registration in `server/index.ts`
-5. Add types to `shared/types.ts`
-
-**Add a new React page:**
-
-1. Create component in `client/src/pages/PageName.tsx`
-2. Add route in `client/src/App.tsx` (wrap with `ProtectedRoute` if needed)
-3. Import UI components from `@/components/ui/*`
-4. Call API functions from `@/api.ts`
-
-**Debug database issues:**
-
-1. Check `DATABASE_URL` in `.env`
-2. Run `npm run db:setup` to initialize schema
-3. Use Drizzle Studio (if available) or direct Postgres queries to inspect tables
-
-## Known Issues & TODOs
-
-- Authentication middleware is stubbed (check [server/auth.ts](server/auth.ts))
-- No comprehensive test suite yet
-- AI response validation could be more robust (consider JSON schema validation library)
+If you discover new issues or workarounds, update this file to help future development.
