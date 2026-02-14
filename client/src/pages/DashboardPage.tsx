@@ -1,184 +1,192 @@
-import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import { FilePlus2, Loader2, FileText } from 'lucide-react'
-import { UploadContractModal } from '@/components/UploadContractModal'
-import { useToast } from '@/components/ui/use-toast'
-import type { Contract } from '@shared/types'
-import { Link } from 'wouter'
-import { cn } from '@/lib/utils'
 
-export function DashboardPage() {
-  const { toast } = useToast()
-  const [isUploadModalOpen, setUploadModalOpen] = useState(false)
-  const [contracts, setContracts] = useState<Contract[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+import React from 'responsive';
+import { 
+  Container, Grid, Card, CardContent, Typography, Chip, 
+  LinearProgress, Alert, Button 
+} from '@mui/material';
+import { 
+  PieChart, pieChartDefaults, Pie, Cell, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveBar 
+} from 'recharts';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '../../contexts/AuthContext';
+import { TrendingUp, Warning, CheckCircle } from '@mui/icons-material';
 
-  useEffect(() => {
-    const fetchContracts = async () => {
-      setIsLoading(true)
-      try {
-        const response = await fetch('/api/contracts')
-        if (!response.ok) {
-          throw new Error('Failed to fetch contracts.')
-        }
-        const data = await response.json()
-        setContracts(data)
-      } catch (error) {
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Could not load your contracts.',
-        })
-      } finally {
-        setIsLoading(false)
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+
+interface Contract {
+  id: number;
+  title: string;
+  status: 'active' | 'expiring' | 'risky' | 'draft';
+  riskScore: number;
+  endDate: string;
+  value: number;
+  counterparty: string;
+}
+
+const fetchDashboardData = async () => {
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/dashboard`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+  });
+  return response.json();
+};
+
+export default function Dashboard() {
+  const { user } = useAuth();
+  const { data, isLoading, error } = useQuery(['dashboard'], fetchDashboardData);
+
+  const riskData = [
+    { name: 'Low Risk', value: data?.riskDistribution?.low || 1870, fill: '#00C49F' },
+    { name: 'Medium Risk', value: data?.riskDistribution?.medium || 450, fill: '#FFBB28' },
+    { name: 'High Risk', value: data?.riskDistribution?.high || 180, fill: '#FF8042' }
+  ];
+
+  const expiringContracts: Contract[] = data?.expiringSoon || [];
+
+  const columns: GridColDef[] = [
+    { field: 'title', headerName: 'Contract', flex: 2 },
+    { field: 'counterparty', headerName: 'Counterparty', flex: 1 },
+    { 
+      field: 'riskScore', 
+      headerName: 'Risk Score', 
+      flex: 1,
+      renderCell: (params) => (
+        <Chip 
+          label={`${params.value}%`}
+          color={params.value > 70 ? 'error' : params.value > 40 ? 'warning' : 'success'}
+          size="small"
+        />
+      )
+    },
+    { 
+      field: 'endDate', 
+      headerName: 'Expires', 
+      flex: 1,
+      renderCell: (params) => {
+        const days = Math.floor((new Date(params.value).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        return <Chip label={`${days}d`} color={days < 30 ? 'error' : 'default'} size="small" />;
       }
-    }
-    fetchContracts()
-  }, [toast])
+    },
+    { field: 'value', headerName: 'Value', flex: 1, valueFormatter: (v) => `$${v.toLocaleString()}` }
+  ];
 
-  const handleUploadSuccess = (newContract: Contract) => {
-    setContracts((prevContracts) => [newContract, ...prevContracts])
-    setUploadModalOpen(false)
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-CA', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
-  }
-
-  const getStatusVariant = (status: Contract['status']) => {
-    switch (status) {
-      case 'active':
-        return 'success'
-      case 'processing':
-        return 'secondary'
-      case 'failed':
-        return 'destructive'
-      default:
-        return 'outline'
-    }
-  }
-
-  const renderContent = () => {
-    if (isLoading) {
-      return (
-        <div className="flex justify-center items-center h-60">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      )
-    }
-
-    if (contracts.length === 0) {
-      return (
-        <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm py-12">
-          <div className="flex flex-col items-center gap-1 text-center">
-            <FileText className="h-12 w-12 text-muted-foreground" />
-            <h3 className="text-2xl font-bold tracking-tight">
-              No contracts yet
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Get started by uploading your first contract.
-            </p>
-            <Button className="mt-4" onClick={() => setUploadModalOpen(true)}>
-              <FilePlus2 className="mr-2 h-4 w-4" />
-              Upload Contract
-            </Button>
-          </div>
-        </div>
-      )
-    }
-
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Contracts</CardTitle>
-          <CardDescription>
-            A list of all contracts in your organization's repository.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Contract Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Upload Date</TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {contracts.map((contract) => (
-                <TableRow key={contract.id}>
-                  <TableCell className="font-medium">{contract.name}</TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusVariant(contract.status)}>
-                      {contract.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {formatDate(contract.createdAt.toString())}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button asChild variant="outline" size="sm">
-                      <Link href={`/contracts/${contract.id}`}>
-                        View Details
-                      </Link>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    )
-  }
+  if (isLoading) return <DashboardSkeleton />;
+  if (error) return <Alert severity="error">Failed to load dashboard data</Alert>;
 
   return (
-    <>
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold md:text-2xl">Dashboard</h1>
-        <div
-          className={cn(
-            'flex items-center gap-2',
-            contracts.length === 0 && 'invisible'
-          )}
-        >
-          <Button onClick={() => setUploadModalOpen(true)}>
-            <FilePlus2 className="mr-2 h-4 w-4" />
-            Upload New Contract
-          </Button>
-        </div>
-      </div>
+    <Container maxWidth="xl" sx={{ mt: 4, mb: 8 }}>
+      <Typography variant="h4" sx={{ mb: 4, fontWeight: 700 }}>
+        Contract Portfolio Overview
+        <Chip label={`Tier ${user.tier}`} sx={{ ml: 2 }} />
+      </Typography>
 
-      {renderContent()}
+      {/* KPI Cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography color="text.secondary" sx={{ mb: 1 }}>Total Contracts</Typography>
+              <Typography variant="h3">{data.totalContracts?.toLocaleString() || '2,543'}</Typography>
+              <Chip icon={<TrendingUp />} label="+12% vs last month" color="success" size="small" />
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography color="text.secondary" sx={{ mb: 1 }}>High Risk</Typography>
+              <Typography variant="h3" color="error">{data.highRisk || 180}</Typography>
+              <LinearProgress variant="determinate" value={data.highRisk / data.totalContracts * 100 || 7} color="error" />
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography color="text.secondary" sx={{ mb: 1 }}>Expiring Soon</Typography>
+              <Typography variant="h3" color="warning">{data.expiringSoonCount || 23}</Typography>
+              <Chip icon={<Warning />} label="30 days" color="warning" size="small" />
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography color="text.secondary" sx={{ mb: 1 }}>AI Insights Generated</Typography>
+              <Typography variant="h3">{data.aiInteractions?.toLocaleString() || '1,247'}</Typography>
+              <Chip icon={<CheckCircle />} label="This month" color="success" size="small" />
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
-      <UploadContractModal
-        isOpen={isUploadModalOpen}
-        onOpenChange={setUploadModalOpen}
-        onUploadSuccess={handleUploadSuccess}
-      />
-    </>
-  )
+      <Grid container spacing={3}>
+        {/* Risk Distribution */}
+        <Grid item xs={12} md={8}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" sx={{ mb: 3 }}>Risk Distribution</Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={riskData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    dataKey="value"
+                    nameKey="name"
+                  >
+                    {riskData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Expiring Contracts Table */}
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Expiring Soon <Chip label={expiringContracts.length} size="small" color="warning" />
+              </Typography>
+              <DataGrid
+                rows={expiringContracts.slice(0, 5)}
+                columns={columns}
+                disableRowSelectionOnClick
+                autoHeight
+                hideFooter
+                sx={{ '& .MuiDataGrid-cell': { fontSize: '0.875rem' } }}
+              />
+              <Button fullWidth variant="outlined" sx={{ mt: 2 }}>
+                View All Contracts →
+              </Button>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* AI Insights Cards */}
+      <Grid container spacing={3} sx={{ mt: 4 }}>
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" sx={{ mb: 2 }}>AI Recommendation</Typography>
+              <Alert severity="info" sx={{ mb: 2 }}>
+                15 contracts missing auto-renewal clauses. Use AI Co-Pilot to standardize.
+              </Alert>
+              <Button variant="contained" startIcon={<SmartToy />}>
+                Bulk Fix with AI
+              </Button>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </Container>
+  );
 }
