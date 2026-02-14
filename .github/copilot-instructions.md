@@ -215,10 +215,10 @@ npm run build
 **App Shell**: `client/src/App.tsx`
 
 - Defines routes using `wouter`
-- Public routes: `/` (landing), `/login`
-- Protected routes: `/dashboard`, `/contracts/:id`, etc.
+- Public routes: `/login`
+- Protected routes: `/` (dashboard), `/contracts/:id`, etc.
 - Uses `<ProtectedRoute>` wrapper for authenticated routes
-- `<MainLayout>` provides consistent layout for dashboard pages
+- Routes currently render their own layouts; there is no shared `<MainLayout>` wrapper in the router
 
 **Pages**: `client/src/pages/*.tsx`
 
